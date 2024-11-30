@@ -7,14 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.irs.QueryStore.Lovs;
-import org.irs.QueryStore.Users;
 import org.irs.database.Datasources;
 import org.irs.dto.AccidentTypesDTO;
 import org.irs.dto.ImageDTO;
 import org.irs.dto.OrganizationsDTO;
 import org.irs.dto.PatientVictimDTO;
-import org.irs.dto.UserRequestDTO;
-import org.irs.dto.UserResponseDTO;
 import org.irs.dto.VehicleInvolvedDTO;
 
 import jakarta.enterprise.context.RequestScoped;
