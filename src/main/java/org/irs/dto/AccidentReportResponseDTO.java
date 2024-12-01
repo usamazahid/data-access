@@ -21,6 +21,13 @@ public class AccidentReportResponseDTO {
    public String status;
    public String description;
    public String createdAt;
+   public String vehicleLabel;
+   public String vehicleDescription; 
+   public String victimLabel;
+   public String victimDescription; 
+   public String accidentTypeLabel;
+   public String accidentTypeDescription; 
+   public String reportedBy; 
     @Override
     public String toString() {
         return "AccidentReportResponseDTO [id=" + id + ", error=" + error + ", rowsInserted=" + rowsInserted + ", latitude="

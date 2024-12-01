@@ -106,5 +106,20 @@ public class MainResource {
      public AccidentReportResponseDTO getAccidentReport(@PathParam("reportId") String reportId) {
          return accidentReportService.getAccidentReportById(reportId);
      }
+
+     @GET
+     @Path("/getJoinedReportByUserId/{userId}")
+     @Produces(MediaType.APPLICATION_JSON)
+     public List<AccidentReportResponseDTO> getJoinedAccidentReportsByUserId(@PathParam("userId") String userId) {
+         return accidentReportService.getJoinedAccidentReportsByUserId(userId);
+ 
+     }
+ 
+      @GET
+      @Path("getJoinedReportById/{reportId}")
+      @Produces(MediaType.APPLICATION_JSON)
+      public AccidentReportResponseDTO getJoinedAccidentReport(@PathParam("reportId") String reportId) {
+          return accidentReportService.getJoinedAccidentReportById(reportId);
+      }
  
 }
