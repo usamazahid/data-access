@@ -2,6 +2,7 @@ package org.irs.QueryStore;
 
 import jakarta.enterprise.context.RequestScoped;
 
+
 @RequestScoped
 public class Users {
     public String getUserDetails(String userId){
@@ -43,4 +44,28 @@ public class Users {
                         return query;
 
     }
+
+
+
+
+    public String insertUser(String mobileNumber, String username, String passwordHash, String email) {
+        String insertUserSQL = "INSERT INTO users (mobile_number, full_name, password_hash, email) VALUES (?, ?, ?, ?) RETURNING id";
+        return insertUserSQL;
+    }
+
+    public String findRoleIdByName( String roleName) {
+        String selectRoleSQL = "SELECT id FROM roles WHERE role_name = ?";
+        return selectRoleSQL;
+    }
+
+    public String assignRoleToUser( Long userId, Long roleId) {
+        String insertUserRoleSQL = "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)";
+        return insertUserRoleSQL;
+    }
+
+    public String mobileExists(String mobileNumber) {
+        String sql = "SELECT COUNT(*) as count FROM users WHERE mobile_number = ?";
+        return sql;
+    }
+
 }
