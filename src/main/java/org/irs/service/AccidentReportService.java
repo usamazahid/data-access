@@ -42,6 +42,8 @@ public class AccidentReportService {
                 }
             }
 
+            System.out.println("Inserted Successfully");
+
         } catch (Exception ex) {
             ex.printStackTrace();
             responseDTO.error = "Error saving accident report: " + ex.getMessage();
@@ -183,7 +185,7 @@ public class AccidentReportService {
             responseDTO.error = "Error fetching accident report: " + ex.getMessage();
             responseDTO.rowsInserted = "0";
         }
-    
+        System.out.println(responseDTO);
         return responseDTO;
     }
 
@@ -232,6 +234,8 @@ public class AccidentReportService {
                 responseDTO.rowsInserted = "0";
                 reports.add(responseDTO);
             }
+
+            System.out.println(reports);
         } catch (Exception ex) {
             ex.printStackTrace();
             // Handle exception and add an error response

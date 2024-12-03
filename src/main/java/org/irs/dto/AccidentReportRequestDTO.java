@@ -17,13 +17,15 @@ public class AccidentReportRequestDTO {
     public String status;
     public String description;
     public String createdAt;
+    public String nearestLandMark;
     @Override
     public String toString() {
-        return "AccidentReportDTO [latitude=" + latitude + ", longitude=" + longitude + ", location=" + location
+        return "AccidentReportRequestDTO [latitude=" + latitude + ", longitude=" + longitude + ", location=" + location
                 + ", vehicleInvolvedId=" + vehicleInvolvedId + ", patientVictimId=" + patientVictimId
                 + ", accidentTypeId=" + accidentTypeId + ", userId=" + userId + ", cause=" + cause + ", numAffecties="
                 + numAffecties + ", age=" + age + ", gender=" + gender + ", imageUri=" + imageUri + ", audioUri="
-                + audioUri + ", status=" + status + ", description=" + description + ", createdAt=" + createdAt + "]";
+                + audioUri + ", status=" + status + ", description=" + description + ", createdAt=" + createdAt
+                + ", nearestLandMark=" + nearestLandMark + "]";
     }
 
      

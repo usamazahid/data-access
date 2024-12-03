@@ -30,12 +30,15 @@ public class AccidentReportResponseDTO {
    public String reportedBy; 
     @Override
     public String toString() {
-        return "AccidentReportResponseDTO [id=" + id + ", error=" + error + ", rowsInserted=" + rowsInserted + ", latitude="
-                + latitude + ", longitude=" + longitude + ", location=" + location + ", vehicleInvolvedId="
-                + vehicleInvolvedId + ", patientVictimId=" + patientVictimId + ", accidentTypeId=" + accidentTypeId
-                + ", userId=" + userId + ", cause=" + cause + ", numAffecties=" + numAffecties + ", age=" + age
-                + ", gender=" + gender + ", imageUri=" + imageUri + ", audioUri=" + audioUri + ", status=" + status
-                + ", description=" + description + ", createdAt=" + createdAt + "]";
+        return "AccidentReportResponseDTO [id=" + id + ", error=" + error + ", rowsInserted=" + rowsInserted
+                + ", latitude=" + latitude + ", longitude=" + longitude + ", location=" + location
+                + ", vehicleInvolvedId=" + vehicleInvolvedId + ", patientVictimId=" + patientVictimId
+                + ", accidentTypeId=" + accidentTypeId + ", userId=" + userId + ", cause=" + cause + ", numAffecties="
+                + numAffecties + ", age=" + age + ", gender=" + gender + ", imageUri=" + imageUri + ", audioUri="
+                + audioUri + ", status=" + status + ", description=" + description + ", createdAt=" + createdAt
+                + ", vehicleLabel=" + vehicleLabel + ", vehicleDescription=" + vehicleDescription + ", victimLabel="
+                + victimLabel + ", victimDescription=" + victimDescription + ", accidentTypeLabel=" + accidentTypeLabel
+                + ", accidentTypeDescription=" + accidentTypeDescription + ", reportedBy=" + reportedBy + "]";
     }
 
 }

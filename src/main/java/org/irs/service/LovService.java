@@ -64,7 +64,7 @@ public class LovService {
 
     public List<VehicleInvolvedDTO> getVehicleInvolved() {
         List<VehicleInvolvedDTO> response = new ArrayList<VehicleInvolvedDTO>();
-
+        System.out.println("Getting Vehcile Involved.");
         String query = lov.getVehicleInvolved();
         try (Connection con = datasource.getConnection(); Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -76,13 +76,14 @@ public class LovService {
         } catch (Exception ex) {
 
         }
+        System.out.println("Vehicle Involved: " + response);
 
         return response;
     }
 
     public List<PatientVictimDTO> getPatientVictim() {
         List<PatientVictimDTO> response = new ArrayList<PatientVictimDTO>();
-
+        System.out.println("Getting Patient victim.");
         String query = lov.getPatientVictim();
         try (Connection con = datasource.getConnection(); Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
@@ -94,7 +95,7 @@ public class LovService {
         } catch (Exception ex) {
 
         }
-
+        System.out.println("Response Patient victim."+ response.toString());
         return response;
     }
 }

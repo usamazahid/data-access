@@ -10,12 +10,12 @@ import jakarta.inject.Singleton;
 public class Report {
 
     public String getInsertAccidentReportQuery(AccidentReportRequestDTO reportDTO) {
-        return "INSERT INTO public.accident_reports (latitude, longitude, location, vehicle_involved_id, " +
+        String query = "INSERT INTO public.accident_reports (latitude, longitude, accident_location, vehicle_involved_id, " +
                        "patient_victim_id, accident_type_id, user_id, cause, num_affecties, age, gender, " +
-                       "image_uri, audio_uri, status, description, created_at) VALUES ( " +
-                       reportDTO.latitude + ", " +
-                       reportDTO.longitude + ", '" +
-                       reportDTO.location + "', " +
+                       "image_uri, audio_uri, status, description) VALUES (" +
+                       (reportDTO.latitude != null ? reportDTO.latitude : "0") + ", " +
+                       (reportDTO.longitude != null ? reportDTO.longitude : "0")  + ", " +
+                       (reportDTO.nearestLandMark != null ? "'"+reportDTO.nearestLandMark+"'" : "0")  + ", " +
                        (reportDTO.vehicleInvolvedId != null ? reportDTO.vehicleInvolvedId : "NULL") + ", " +
                        (reportDTO.patientVictimId != null ? reportDTO.patientVictimId : "NULL") + ", " +
                        (reportDTO.accidentTypeId != null ? reportDTO.accidentTypeId : "NULL") + ", " +
@@ -27,8 +27,11 @@ public class Report {
                        (reportDTO.imageUri != null ? reportDTO.imageUri : "") + "', '" +
                        (reportDTO.audioUri != null ? reportDTO.audioUri : "") + "', '" +
                        (reportDTO.status != null ? reportDTO.status : "pending") + "', '" +
-                       (reportDTO.description != null ? reportDTO.description : "") + "', '" +
-                       (reportDTO.createdAt != null ? reportDTO.createdAt : new Timestamp(System.currentTimeMillis())) + "')";
+                       (reportDTO.description != null ? reportDTO.description : "") + "')" 
+                    //    (reportDTO.createdAt != null ? reportDTO.createdAt : new Timestamp(System.currentTimeMillis())) + "')"
+                       ;
+                       System.out.println(query);
+        return query;
     }
 
     public String getSelectByReportId(String reportId) {
@@ -45,7 +48,7 @@ public class Report {
                 ar.report_id, 
                 ar.latitude, 
                 ar.longitude, 
-                ar.location, 
+                ar.accident_location as location, 
                 ar.vehicle_involved_id, 
                 vi.label AS vehicle_label, 
                 vi.description AS vehicle_description,
@@ -83,7 +86,7 @@ public class Report {
                 ar.report_id, 
                 ar.latitude, 
                 ar.longitude, 
-                ar.location, 
+                ar.accident_location as location, 
                 ar.vehicle_involved_id, 
                 vi.label AS "vehicle_label", 
                 vi.description AS "vehicle_description",
