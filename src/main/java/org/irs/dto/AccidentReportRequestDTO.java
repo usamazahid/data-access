@@ -14,6 +14,10 @@ public class AccidentReportRequestDTO {
     public String gender;
     public String imageUri;
     public String audioUri;
+    public String imageData;
+    public String audioData;
+    public String imagePath;
+    public String audioPath;
     public String status;
     public String description;
     public String createdAt;
@@ -24,9 +28,9 @@ public class AccidentReportRequestDTO {
                 + ", vehicleInvolvedId=" + vehicleInvolvedId + ", patientVictimId=" + patientVictimId
                 + ", accidentTypeId=" + accidentTypeId + ", userId=" + userId + ", cause=" + cause + ", numAffecties="
                 + numAffecties + ", age=" + age + ", gender=" + gender + ", imageUri=" + imageUri + ", audioUri="
-                + audioUri + ", status=" + status + ", description=" + description + ", createdAt=" + createdAt
-                + ", nearestLandMark=" + nearestLandMark + "]";
+                + audioUri + ", imageData=" + imageData + ", audioData=" + audioData + ", imagePath=" + imagePath
+                + ", audioPath=" + audioPath + ", status=" + status + ", description=" + description + ", createdAt="
+                + createdAt + ", nearestLandMark=" + nearestLandMark + "]";
     }
-
      
 }

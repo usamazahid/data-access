@@ -139,5 +139,19 @@ public class MainResource {
     }
 
     }
+
+    @GET
+    @Path("/base64/{filename}")
+    public String getImageBase64(@PathParam("filename") String filename) {
+        return accidentReportService.getFileBase64Response(filename);
+    }
+
+    @GET
+    @Path("getReportFiles/{reportId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public AccidentReportResponseDTO getFileData(@PathParam("reportId") String reportId) {
+        return accidentReportService.getReportFiles(reportId);
+    }
+
  
 }

@@ -2,13 +2,16 @@ package org.irs.service;
 
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
+import org.irs.util.ConstantValues;
+import org.irs.util.GeneralMethods;
 
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
+import jakarta.inject.Inject; 
 
 import org.irs.QueryStore.Report;
 import org.irs.database.Datasources;
-
+ 
 import java.sql.Connection; 
 import java.sql.ResultSet;
 import java.sql.Statement; 
@@ -24,25 +27,45 @@ public class AccidentReportService {
     @Inject
     Report queryStore;
 
+    @Inject
+    GeneralMethods generalMethods;
+
     public AccidentReportResponseDTO saveAccidentReport(AccidentReportRequestDTO reportDTO) {
-        // Construct the query with actual values
-        String query =queryStore.getInsertAccidentReportQuery(reportDTO);
-
         AccidentReportResponseDTO responseDTO = new AccidentReportResponseDTO();
-        try (Connection con = datasource.getConnection(); Statement stmt = con.createStatement()) {
-            // Execute the insert query and return generated keys
-            int rowsAffected = stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS);
-            responseDTO.rowsInserted = String.valueOf(rowsAffected);
+         // Process image data
+         try {
 
-            // Get the generated ID (report_id)
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    long generatedId = rs.getLong(1);
-                    responseDTO.id = String.valueOf(generatedId);
-                }
+            // Process image data
+            if (reportDTO.imageData != null && !reportDTO.imageData.isEmpty()) {
+                String imagePath = generalMethods.saveBase64ToFile(reportDTO.imageData, "image", ".jpg");
+                reportDTO.imageUri = imagePath; // Set the path for saving in DB
             }
 
-            System.out.println("Inserted Successfully");
+            // Process audio data
+            if (reportDTO.audioData != null && !reportDTO.audioData.isEmpty()) {
+                String audioPath = generalMethods.saveBase64ToFile(reportDTO.audioData, "audio", ".mp3");
+                reportDTO.audioUri = audioPath; // Set the path for saving in DB
+            }
+
+            String query =queryStore.getInsertAccidentReportQuery(reportDTO);
+    
+        
+            try (Connection con = datasource.getConnection(); Statement stmt = con.createStatement()) {
+                // Execute the insert query and return generated keys
+                int rowsAffected = stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS);
+                responseDTO.rowsInserted = String.valueOf(rowsAffected);
+
+                // Get the generated ID (report_id)
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        long generatedId = rs.getLong(1);
+                        responseDTO.id = String.valueOf(generatedId);
+                    }
+                }
+
+                System.out.println("Inserted Successfully");
+
+            }
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -247,5 +270,49 @@ public class AccidentReportService {
     
         return reports;
     }
+    public String getFileBase64Response(String fileName){
+        try {
+            String filePath=ConstantValues.BASE_DIR+fileName;
+            return  generalMethods.readFileAsBase64(filePath);
+        } catch (Exception e) {
+            Log.info(e);
+            return null;
+        }
+    }
+
+    public AccidentReportResponseDTO getReportFiles(String reportId) {
+        String query = queryStore.getSelectByReportId(reportId);
+        AccidentReportResponseDTO responseDTO = new AccidentReportResponseDTO();
+    
+        try (Connection con = datasource.getConnection(); 
+             Statement stmt = con.createStatement(); 
+             ResultSet rs = stmt.executeQuery(query)) {
+    
+            if (rs.next()) {
+                responseDTO.id = String.valueOf(rs.getLong("report_id"));
+
+                responseDTO.imageUri = rs.getString("image_uri");
+                responseDTO.audioUri = rs.getString("audio_uri"); 
+                    // Convert files to Base64 if they exist
+                if (responseDTO.imageUri != null && !responseDTO.imageUri.isEmpty()) {
+                    responseDTO.imageData = generalMethods.readFileAsBase64(responseDTO.imageUri);
+                }
+                if (responseDTO.audioUri != null && !responseDTO.audioUri.isEmpty()) {
+                    responseDTO.audioData = generalMethods.readFileAsBase64(responseDTO.audioUri);
+                }
+           
+            } else {
+                responseDTO.error = "No report found with the provided ID.";
+                responseDTO.rowsInserted = "0";
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            responseDTO.error = "Error fetching accident report: " + ex.getMessage();
+            responseDTO.rowsInserted = "0";
+        }
+    
+        return responseDTO;
+    }
+    
 
 }

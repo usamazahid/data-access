@@ -35,11 +35,51 @@ public class Report {
     }
 
     public String getSelectByReportId(String reportId) {
-        return "SELECT * FROM public.accident_reports WHERE report_id = " + reportId;
+        return """
+            Select 
+                report_id, 
+                latitude, 
+                longitude, 
+                accident_location as location, 
+                vehicle_involved_id, 
+                patient_victim_id, 
+                accident_type_id, 
+                user_id, 
+                cause, 
+                num_affecties, 
+                age, 
+                gender, 
+                image_uri, 
+                audio_uri, 
+                status, 
+                description, 
+                created_at 
+            From 
+                public.accident_reports  WHERE report_id = """+ reportId;
     }
 
     public String getSelectByUserId(String userId) {
-        return "SELECT * FROM public.accident_reports WHERE user_id = " + userId;
+        return """
+            Select 
+                report_id, 
+                latitude, 
+                longitude, 
+                accident_location as location, 
+                vehicle_involved_id, 
+                patient_victim_id, 
+                accident_type_id, 
+                user_id, 
+                cause, 
+                num_affecties, 
+                age, 
+                gender, 
+                image_uri, 
+                audio_uri, 
+                status, 
+                description, 
+                created_at 
+            From 
+                public.accident_reports WHERE user_id = """ + userId;
     }
 
     public String getJoinedAccidentReportsById(String reportId) {

@@ -28,6 +28,8 @@ public class AccidentReportResponseDTO {
    public String accidentTypeLabel;
    public String accidentTypeDescription; 
    public String reportedBy; 
+   public String imageData;
+   public String audioData;
     @Override
     public String toString() {
         return "AccidentReportResponseDTO [id=" + id + ", error=" + error + ", rowsInserted=" + rowsInserted
@@ -38,7 +40,8 @@ public class AccidentReportResponseDTO {
                 + audioUri + ", status=" + status + ", description=" + description + ", createdAt=" + createdAt
                 + ", vehicleLabel=" + vehicleLabel + ", vehicleDescription=" + vehicleDescription + ", victimLabel="
                 + victimLabel + ", victimDescription=" + victimDescription + ", accidentTypeLabel=" + accidentTypeLabel
-                + ", accidentTypeDescription=" + accidentTypeDescription + ", reportedBy=" + reportedBy + "]";
+                + ", accidentTypeDescription=" + accidentTypeDescription + ", reportedBy=" + reportedBy + ", imageData="
+                + imageData + ", audioData=" + audioData + "]";
     }
 
 }
