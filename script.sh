@@ -3,6 +3,7 @@
 # Exit script on any error
 set -e
 
+DEFAULT_DIRECTORY_FILES="/external-storage/accident-reports"
 # Set the default repository name
 DEFAULT_REPO_NAME="data-access"
 
@@ -47,12 +48,33 @@ mvn package
 echo "Building the Docker image..."
 docker build -f src/main/docker/Dockerfile.jvm -t $IMAGE_NAME .
 
+# Stop and remove any running container using the same image
+EXISTING_CONTAINER=$(docker ps -q --filter ancestor=$IMAGE_NAME)
+
+if [ ! -z "$EXISTING_CONTAINER" ]; then
+  echo "Stopping and removing the existing container for image '$IMAGE_NAME'..."
+  docker stop $EXISTING_CONTAINER
+fi
+
+# Check if the directory exists
+if [ ! -d "$DEFAULT_DIRECTORY_FILES" ]; then
+  echo "Directory '$DEFAULT_DIRECTORY_FILES' does not exist. Creating it..."
+  mkdir -p "$DEFAULT_DIRECTORY_FILES"
+  # Set permissions for the directory
+  echo "Setting permissions for '$DEFAULT_DIRECTORY_FILES'..."
+  chmod 777 "$DEFAULT_DIRECTORY_FILES"
+else
+  echo "Directory '$DEFAULT_DIRECTORY_FILES' already exists."
+fi
+
+
 # Run the Docker container in detached mode, passing DB_IP as an environment variable
 echo "Running the Docker container in the background, exposing DB_IP..."
 docker run -d --rm -p 8080:8080 \
   -e JAVA_DEBUG=true \
   -e JAVA_DEBUG_PORT=*:5005 \
   -e DB_IP=${DB_IP} \
+  -v ${DEFAULT_DIRECTORY_FILES}:${DEFAULT_DIRECTORY_FILES} \
   $IMAGE_NAME
 
 echo "Container for '$IMAGE_NAME' is running in the background on port 8080 with DB_IP='$DB_IP'."
