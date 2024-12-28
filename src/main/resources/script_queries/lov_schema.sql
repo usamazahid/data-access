@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS ambulance (
 
 CREATE TABLE IF NOT EXISTS ambulance_drivers (
     id SERIAL PRIMARY KEY,
-    driver_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+    driver_id INT REFERENCES users(id) ON DELETE CASCADE,
     ambulance_id INT REFERENCES ambulance(ambulance_id) ON DELETE CASCADE,
     start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     end_date TIMESTAMP

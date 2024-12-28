@@ -32,15 +32,13 @@ CREATE TABLE IF NOT EXISTS dispatch (
     dispatch_id SERIAL PRIMARY KEY,
     report_id INT REFERENCES accident_reports(report_id) ON DELETE CASCADE,
     ambulance_id INT REFERENCES ambulance(ambulance_id),
-    driver_id INT REFERENCES users(user_id),
-    assigned_by INT REFERENCES users(user_id),
+    driver_id INT REFERENCES users(id),
+    assigned_by INT REFERENCES users(id),
     pickup_time TIMESTAMP,
     drop_time TIMESTAMP,
     latitude numeric(9, 6) NULL,
 	longitude numeric(9, 6) NULL,
 	drop_location varchar(255) NULL,
-    hospital_id INT REFERENCES hospital(hospital_id),
+    hospital_id INT REFERENCES organizations(id),
     status VARCHAR(50) DEFAULT 'in progress' -- in progress, pending, assigned,droped,picked
 ); 
-
-
