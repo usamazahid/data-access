@@ -4,15 +4,18 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
 import org.irs.dto.AccidentTypesDTO;
+import org.irs.dto.DispatchRequestDto;
 import org.irs.dto.OrganizationsDTO;
 import org.irs.dto.PatientVictimDTO;
 import org.irs.dto.UserRequestDTO;
@@ -20,6 +23,7 @@ import org.irs.dto.UserResponseDTO;
 import org.irs.dto.UserRolesDTO;
 import org.irs.dto.VehicleInvolvedDTO;
 import org.irs.service.AccidentReportService;
+import org.irs.service.DispatchService;
 import org.irs.service.LovService;
 import org.irs.service.UserDetailService;
 
@@ -152,6 +156,77 @@ public class MainResource {
     public AccidentReportResponseDTO getFileData(@PathParam("reportId") String reportId) {
         return accidentReportService.getReportFiles(reportId);
     }
+
+    @Inject
+    DispatchService dispatchService;
+
+    // 1. Create a new dispatch
+    @POST
+    @Path("dispatch/create")
+    public Response createDispatch(DispatchRequestDto dispatchDTO) {
+        try {
+            return dispatchService.createDispatch(dispatchDTO);
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error creating dispatch: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    // 2. Get dispatches by driver
+    @GET
+    @Path("dispatch/driver/{driverId}")
+    public Response getDispatchesByDriver(@PathParam("driverId") Integer driverId) {
+        try {
+           return dispatchService.getDispatchesByDriver(driverId);
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error retrieving dispatches: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    // 3. Accept a dispatch
+    @PUT
+    @Path("dispatch/accept")
+    public Response acceptDispatch(DispatchRequestDto dispatchRequestDto) {
+        try {
+            dispatchService.acceptDispatch(dispatchRequestDto.dispatchId, dispatchRequestDto.ambulanceId, dispatchRequestDto.reportId);
+            return Response.ok("Dispatch accepted successfully").build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error accepting dispatch: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    // 4. Update pickup time
+    @PUT
+    @Path("dispatch/pickup/{dispatchId}")
+    public Response updatePickup(@PathParam("dispatchId") Integer dispatchId) {
+        try {
+             return dispatchService.updatePickup(dispatchId); 
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error updating pickup time: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    // 5. Update drop details
+    @PUT
+    @Path("dispatch/drop")
+    public Response updateDrop(DispatchRequestDto dispatchRequestDto) {
+        try {
+            return dispatchService.updateDrop(dispatchRequestDto);
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error updating drop details: " + e.getMessage())
+                    .build();
+        }
+    }
+
+
 
  
 }
