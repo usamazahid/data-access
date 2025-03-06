@@ -28,5 +28,44 @@ public class Lovs {
         // System.out.println(query);
         return query;
     }
-
+    
+    public String getApparentCause() {
+        String query = "SELECT * FROM apparent_cause";
+        return query;
+    }
+    
+    public String getWeatherCondition() {
+        String query = "SELECT * FROM weather_condition";
+        return query;
+    }
+    
+    public String getVisibility() {
+        String query = "SELECT * FROM visibility";
+        return query;
+    }
+    
+    public String getRoadSurfaceCondition() {
+        String query = "SELECT * FROM road_surface_condition";
+        return query;
+    }
+    
+    public String getRoadType() {
+        String query = "SELECT * FROM road_type";
+        return query;
+    }
+    
+    public String getRoadSignage() {
+        String query = "SELECT * FROM road_signage";
+        return query;
+    }
+    
+    public String getCaseReferredTo() {
+        String query = "SELECT * FROM case_referred_to";
+        return query;
+    }
+    
+    public String getFaultAssessment() {
+        String query = "SELECT * FROM preliminary_fault_assessment";
+        return query;
+    }
 }

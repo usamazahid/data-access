@@ -129,3 +129,107 @@ CREATE TABLE IF NOT EXISTS ambulance_drivers (
     start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     end_date TIMESTAMP
 );
+
+-- Apparent Cause Table
+CREATE TABLE apparent_cause (
+    id SERIAL PRIMARY KEY,
+    cause VARCHAR(50) NOT NULL,
+    other_details VARCHAR(255)
+);
+
+INSERT INTO apparent_cause (cause, other_details) VALUES 
+('Over speeding', NULL),
+('Brake Failure', NULL),
+('Road Condition', NULL),
+('Driver Negligence', NULL),
+('Weather Conditions', NULL),
+('Mechanical Failure', NULL),
+('Other', 'Driver fatigue');
+
+-- Weather Condition Table
+CREATE TABLE weather_condition (
+    id SERIAL PRIMARY KEY,
+    condition VARCHAR(50) NOT NULL
+);
+
+INSERT INTO weather_condition (condition) VALUES 
+('Clear'),
+('Rain'),
+('Fog'),
+('Dust'),
+('Windy');
+
+-- Visibility Table
+CREATE TABLE visibility (
+    id SERIAL PRIMARY KEY,
+    level VARCHAR(50) NOT NULL
+);
+
+INSERT INTO visibility (level) VALUES 
+('Good'),
+('Moderate'),
+('Poor');
+
+-- Road Surface Condition Table
+CREATE TABLE road_surface_condition (
+    id SERIAL PRIMARY KEY,
+    condition VARCHAR(50) NOT NULL
+);
+
+INSERT INTO road_surface_condition (condition) VALUES 
+('Dry'),
+('Wet'),
+('Damaged'),
+('Under Construction');
+
+-- Road Type Table
+CREATE TABLE road_type (
+    id SERIAL PRIMARY KEY,
+    type VARCHAR(50) NOT NULL
+);
+
+INSERT INTO road_type (type) VALUES 
+('Highway'),
+('Urban Road'),
+('Intersection'),
+('Service Road'),
+('Bridge/Flyover');
+
+-- Road Markings / Signage Table
+CREATE TABLE road_signage (
+    id SERIAL PRIMARY KEY,
+    status VARCHAR(50) NOT NULL
+);
+
+INSERT INTO road_signage (status) VALUES 
+('Clear'),
+('Faded'),
+('Missing');
+
+-- Case Referred To Table
+CREATE TABLE case_referred_to (
+    id SERIAL PRIMARY KEY,
+    unit VARCHAR(50) NOT NULL
+);
+
+INSERT INTO case_referred_to (unit) VALUES 
+('Investigation Unit'),
+('Traffic Police'),
+('Legal Aid'),
+('Not Applicable');
+
+-- Preliminary Fault Assessment Table
+CREATE TABLE preliminary_fault_assessment (
+    id SERIAL PRIMARY KEY,
+    fault VARCHAR(50) NOT NULL
+);
+
+INSERT INTO preliminary_fault_assessment (fault) VALUES 
+('Driver 1'),
+('Driver 2'),
+('Road Condition'),
+('Mechanical Failure'),
+('Shared Fault'),
+('Undetermined');
+
+-- Let me know if you want me to add relationships or normalize the design further! 🚀
