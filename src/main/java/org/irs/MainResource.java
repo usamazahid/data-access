@@ -8,20 +8,29 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
 import org.irs.dto.AccidentTypesDTO;
+import org.irs.dto.ApparentCauseDTO;
+import org.irs.dto.CaseReferredToDTO;
 import org.irs.dto.DispatchRequestDto;
+import org.irs.dto.FaultAssessmentDTO;
+import org.irs.dto.LovResponseDTO;
 import org.irs.dto.OrganizationsDTO;
 import org.irs.dto.PatientVictimDTO;
+import org.irs.dto.RoadSignageDTO;
+import org.irs.dto.RoadSurfaceConditionDTO;
+import org.irs.dto.RoadTypeDTO;
 import org.irs.dto.UserRequestDTO;
 import org.irs.dto.UserResponseDTO;
 import org.irs.dto.UserRolesDTO;
 import org.irs.dto.VehicleInvolvedDTO;
+import org.irs.dto.VisibilityDTO;
+import org.irs.dto.WeatherConditionDTO;
 import org.irs.service.AccidentReportService;
 import org.irs.service.DispatchService;
 import org.irs.service.LovService;
@@ -226,7 +235,76 @@ public class MainResource {
         }
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getApparentCause")
+    public List<ApparentCauseDTO> getApparentCauseEndpoint() {
+        return lovService.getApparentCause();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getWeatherCondition")
+    public List<WeatherConditionDTO> getWeatherConditionEndpoint() {
+        return lovService.getWeatherCondition();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getVisibility")
+    public List<VisibilityDTO> getVisibilityEndpoint() {
+        return lovService.getVisibility();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getRoadSurfaceCondition")
+    public List<RoadSurfaceConditionDTO> getRoadSurfaceConditionEndpoint() {
+        return lovService.getRoadSurfaceCondition();
+    }
 
 
- 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getRoadType")
+    public List<RoadTypeDTO> getRoadTypeEndpoint() {
+        return lovService.getRoadType();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getRoadSignage")
+    public List<RoadSignageDTO> getRoadSignageEndpoint() {
+        return lovService.getRoadSignage();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getCaseReferredTo")
+    public List<CaseReferredToDTO> getCaseReferredToEndpoint() {
+        return lovService.getCaseReferredTo();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getFaultAssessment")
+    public List<FaultAssessmentDTO> getFaultAssessmentEndpoint() {
+        return lovService.getFaultAssessment();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getAllLovs")
+    public Map<String, List<Map<String, Object>>> getAllLovs() {
+        return lovService.getAllLovs();
+    }
+
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchAllLovs")
+    public LovResponseDTO fetchAllLovs() {
+        return lovService.fetchAllLovs();
+}
+
 }

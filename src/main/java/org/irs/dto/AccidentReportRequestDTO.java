@@ -1,5 +1,7 @@
 package org.irs.dto;
 
+import java.util.List;
+
 public class AccidentReportRequestDTO {
     public Double latitude;
     public Double longitude;
@@ -22,6 +24,25 @@ public class AccidentReportRequestDTO {
     public String description;
     public String createdAt;
     public String nearestLandMark;
+    public String videoUri;
+    public String weatherCondition;
+    public String visibility;
+    public String roadSurfaceCondition;
+    public String roadType;
+    public String roadMarkings;
+    public String officerName;
+    public String officerDesignation;
+    public String officerContactNo;
+    public String preliminaryFault;
+    public String officerNotes;
+
+    public List<VehicleDTO> vehicles;
+    public List<DriverDTO> drivers;
+    public List<PassengerDTO> casualties;
+    public List<WitnessDTO> witnesses;
+    public FollowUpDTO followUp;
+    public EvidenceDTO evidence;
+
     @Override
     public String toString() {
         return "AccidentReportRequestDTO [latitude=" + latitude + ", longitude=" + longitude + ", location=" + location
@@ -34,3 +55,5 @@ public class AccidentReportRequestDTO {
     }
      
 }
+
+
