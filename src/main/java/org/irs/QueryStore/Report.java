@@ -1,8 +1,13 @@
 package org.irs.QueryStore;
 
-import java.sql.Timestamp;
 
 import org.irs.dto.AccidentReportRequestDTO;
+import org.irs.dto.DriverDTO;
+import org.irs.dto.EvidenceDTO;
+import org.irs.dto.FollowUpDTO;
+import org.irs.dto.PassengerDTO;
+import org.irs.dto.VehicleDTO;
+import org.irs.dto.WitnessDTO;
 
 import jakarta.inject.Singleton;
 
@@ -12,10 +17,12 @@ public class Report {
     public String getInsertAccidentReportQuery(AccidentReportRequestDTO reportDTO) {
         String query = "INSERT INTO public.accident_reports (latitude, longitude, accident_location, vehicle_involved_id, " +
                        "patient_victim_id, accident_type_id, user_id, cause, num_affecties, age, gender, " +
-                       "image_uri, audio_uri, status, description) VALUES (" +
+                       "image_uri, audio_uri, video_uri, status, description, weather_condition, visibility, " +
+                       "road_surface_condition, road_type, road_markings, officer_name, officer_designation, officer_contact_no, " +
+                       "preliminary_fault, officer_notes) VALUES (" +
                        (reportDTO.latitude != null ? reportDTO.latitude : "0") + ", " +
-                       (reportDTO.longitude != null ? reportDTO.longitude : "0")  + ", " +
-                       (reportDTO.nearestLandMark != null ? "'"+reportDTO.nearestLandMark+"'" : "0")  + ", " +
+                       (reportDTO.longitude != null ? reportDTO.longitude : "0") + ", " +
+                       (reportDTO.nearestLandMark != null ? "'" + reportDTO.nearestLandMark + "'" : "NULL") + ", " +
                        (reportDTO.vehicleInvolvedId != null ? reportDTO.vehicleInvolvedId : "NULL") + ", " +
                        (reportDTO.patientVictimId != null ? reportDTO.patientVictimId : "NULL") + ", " +
                        (reportDTO.accidentTypeId != null ? reportDTO.accidentTypeId : "NULL") + ", " +
@@ -26,11 +33,21 @@ public class Report {
                        reportDTO.gender + "', '" +
                        (reportDTO.imageUri != null ? reportDTO.imageUri : "") + "', '" +
                        (reportDTO.audioUri != null ? reportDTO.audioUri : "") + "', '" +
+                       (reportDTO.videoUri != null ? reportDTO.videoUri : "") + "', '" +
                        (reportDTO.status != null ? reportDTO.status : "pending") + "', '" +
-                       (reportDTO.description != null ? reportDTO.description : "") + "')" 
-                    //    (reportDTO.createdAt != null ? reportDTO.createdAt : new Timestamp(System.currentTimeMillis())) + "')"
-                       ;
-                       System.out.println(query);
+                       (reportDTO.description != null ? reportDTO.description : "") + "', '" +
+                       (reportDTO.weatherCondition != null ? reportDTO.weatherCondition : "") + "', '" +
+                       (reportDTO.visibility != null ? reportDTO.visibility : "") + "', '" +
+                       (reportDTO.roadSurfaceCondition != null ? reportDTO.roadSurfaceCondition : "") + "', '" +
+                       (reportDTO.roadType != null ? reportDTO.roadType : "") + "', '" +
+                       (reportDTO.roadMarkings != null ? reportDTO.roadMarkings : "") + "', '" +
+                       (reportDTO.officerName != null ? reportDTO.officerName : "") + "', '" +
+                       (reportDTO.officerDesignation != null ? reportDTO.officerDesignation : "") + "', '" +
+                       (reportDTO.officerContactNo != null ? reportDTO.officerContactNo : "") + "', '" +
+                       (reportDTO.preliminaryFault != null ? reportDTO.preliminaryFault : "") + "', '" +
+                       (reportDTO.officerNotes != null ? reportDTO.officerNotes : "") + "')";
+        
+        System.out.println(query);
         return query;
     }
 
@@ -155,6 +172,44 @@ public class Report {
             LEFT JOIN public.users u ON ar.user_id = u.id
             WHERE u.id = 
         """+userId;
+    }
+
+        // 🚀 Query Methods (to be placed in QueryStore)
+
+    public String getInsertVehicleQuery(VehicleDTO vehicle, Long reportId) {
+        return "INSERT INTO vehicle_details (report_id, registration_no, type, condition, fitness_certificate_status, road_tax_status, insurance_status) VALUES ("
+                + reportId + ", '" + vehicle.getRegistrationNo() + "', '" + vehicle.getType() + "', '" + vehicle.getCondition() + "', '" + vehicle.getFitnessCertificateStatus() + "', '" + vehicle.getRoadTaxStatus() + "', '" + vehicle.getInsuranceStatus() + "');";
+    }
+
+    public String getInsertDriverQuery(DriverDTO driver, Long reportId) {
+        return "INSERT INTO driver_details (report_id, name, cnic_no, license_no, contact_no) VALUES ("
+                + reportId + ", '" + driver.getName() + "', '" + driver.getCnicNo() + "', '" + driver.getLicenseNo() + "', '" + driver.getContactNo() + "');";
+    }
+
+    public String getInsertPassengerQuery(PassengerDTO passenger, Long reportId) {
+        return "INSERT INTO passenger_casualties (report_id, type, name, hospital_name, injury_severity) VALUES ("
+                + reportId + ", '" + passenger.getType() + "', '" + passenger.getName() + "', '" + passenger.getHospitalName() + "', '" + passenger.getInjurySeverity() + "');";
+    }
+
+    public String getInsertWitnessQuery(WitnessDTO witness, Long reportId) {
+        return "INSERT INTO witness_details (report_id, name, contact_no, address) VALUES ("
+                + reportId + ", '" + witness.getName() + "', '" + witness.getContactNo() + "', '" + witness.getAddress() + "');";
+    }
+
+    public String getInsertFollowUpQuery(FollowUpDTO followUp, Long reportId) {
+        return "INSERT INTO follow_up_actions (report_id, fir_registered, fir_number, challan_issued, challan_number, case_referred_to) VALUES ("
+                + reportId + ", " + followUp.isFirRegistered() + ", '" + followUp.getFirNumber() + "', " + followUp.isChallanIssued() + ", '" + followUp.getChallanNumber() + "', '" + followUp.getCaseReferredTo() + "');";
+    }
+
+    public String getInsertEvidenceQuery(EvidenceDTO evidence, Long reportId) {
+        return "INSERT INTO evidence_collection (report_id, photos, videos, sketch) VALUES ("
+                + reportId + ", " + evidence.isPhotosTaken() + ", " + evidence.isVideosRecorded() + ", " + evidence
+                    .isSketchPrepared() + ");";
+    }
+
+    // 🚀 Add this query to QueryStore
+    public String getInsertImageQuery(String imageUri, Long reportId) {
+        return "INSERT INTO public.accident_report_images (report_id, image_uri) VALUES (" + reportId + ", '" + imageUri + "');";
     }
 
     

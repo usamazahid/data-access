@@ -42,6 +42,7 @@ public class AccidentReportRequestDTO {
     public List<WitnessDTO> witnesses;
     public FollowUpDTO followUp;
     public EvidenceDTO evidence;
+    public List<ImageDTO> imageDTOs;
 
     @Override
     public String toString() {

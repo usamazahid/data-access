@@ -2,18 +2,25 @@ package org.irs.service;
 
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
+import org.irs.dto.DriverDTO;
+import org.irs.dto.ImageDTO;
+import org.irs.dto.PassengerDTO;
+import org.irs.dto.VehicleDTO;
+import org.irs.dto.WitnessDTO;
 import org.irs.util.ConstantValues;
 import org.irs.util.GeneralMethods;
 
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject; 
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 import org.irs.QueryStore.Report;
 import org.irs.database.Datasources;
  
 import java.sql.Connection; 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement; 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,50 +37,99 @@ public class AccidentReportService {
     @Inject
     GeneralMethods generalMethods;
 
+    @Transactional
     public AccidentReportResponseDTO saveAccidentReport(AccidentReportRequestDTO reportDTO) {
         AccidentReportResponseDTO responseDTO = new AccidentReportResponseDTO();
-         // Process image data
-         try {
-
-            // Process image data
+        int totalRowsInserted = 0;
+    
+        try (Connection con = datasource.getConnection(); Statement stmt = con.createStatement()) {
+            // Handle image & audio files
             if (reportDTO.imageData != null && !reportDTO.imageData.isEmpty()) {
                 String imagePath = generalMethods.saveBase64ToFile(reportDTO.imageData, "image", ".jpg");
-                reportDTO.imageUri = imagePath; // Set the path for saving in DB
+                reportDTO.imageUri = imagePath;
             }
-
-            // Process audio data
             if (reportDTO.audioData != null && !reportDTO.audioData.isEmpty()) {
                 String audioPath = generalMethods.saveBase64ToFile(reportDTO.audioData, "audio", ".mp3");
-                reportDTO.audioUri = audioPath; // Set the path for saving in DB
+                reportDTO.audioUri = audioPath;
             }
-
-            String query =queryStore.getInsertAccidentReportQuery(reportDTO);
     
-        
-            try (Connection con = datasource.getConnection(); Statement stmt = con.createStatement()) {
-                // Execute the insert query and return generated keys
-                int rowsAffected = stmt.executeUpdate(query, Statement.RETURN_GENERATED_KEYS);
-                responseDTO.rowsInserted = String.valueOf(rowsAffected);
-
-                // Get the generated ID (report_id)
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        long generatedId = rs.getLong(1);
-                        responseDTO.id = String.valueOf(generatedId);
-                    }
+            // Save the main accident report
+            String reportQuery = queryStore.getInsertAccidentReportQuery(reportDTO);
+            int rowsAffected = stmt.executeUpdate(reportQuery, Statement.RETURN_GENERATED_KEYS);
+            totalRowsInserted += rowsAffected;
+    
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    long reportId = rs.getLong(1);
+                    responseDTO.id = String.valueOf(reportId);
+    
+                    // Insert related records and count rows
+                    totalRowsInserted += insertRelatedRecords(reportId, reportDTO, stmt);
+                    totalRowsInserted += insertReportImages(reportId, reportDTO, stmt);
                 }
-
-                System.out.println("Inserted Successfully");
-
             }
-
+    
         } catch (Exception ex) {
             ex.printStackTrace();
             responseDTO.error = "Error saving accident report: " + ex.getMessage();
+            throw new RuntimeException(ex); // Let Quarkus handle rollback
         }
-
+    
+        responseDTO.rowsInserted = String.valueOf(totalRowsInserted);
         return responseDTO;
     }
+    
+   
+    private int insertRelatedRecords(Long reportId, AccidentReportRequestDTO reportDTO, Statement stmt) throws SQLException {
+        int rowsInserted = 0;
+
+        if (reportDTO.vehicles != null && !reportDTO.vehicles.isEmpty()) {
+            for (VehicleDTO vehicle : reportDTO.vehicles) {
+                rowsInserted += stmt.executeUpdate(queryStore.getInsertVehicleQuery(vehicle, reportId));
+            }
+        }
+        if (reportDTO.drivers != null && !reportDTO.drivers.isEmpty()) {
+            for (DriverDTO driver : reportDTO.drivers) {
+                rowsInserted += stmt.executeUpdate(queryStore.getInsertDriverQuery(driver, reportId));
+            }
+        }
+        if (reportDTO.casualties != null && !reportDTO.casualties.isEmpty()) {
+            for (PassengerDTO passenger : reportDTO.casualties) {
+                rowsInserted += stmt.executeUpdate(queryStore.getInsertPassengerQuery(passenger, reportId));
+            }
+        }
+        if (reportDTO.witnesses != null && !reportDTO.witnesses.isEmpty()) {
+            for (WitnessDTO witness : reportDTO.witnesses) {
+                rowsInserted += stmt.executeUpdate(queryStore.getInsertWitnessQuery(witness, reportId));
+            }
+        }
+        if (reportDTO.followUp != null) {
+            rowsInserted += stmt.executeUpdate(queryStore.getInsertFollowUpQuery(reportDTO.followUp, reportId));
+        }
+        if (reportDTO.evidence != null) {
+            rowsInserted += stmt.executeUpdate(queryStore.getInsertEvidenceQuery(reportDTO.evidence, reportId));
+        }
+
+        return rowsInserted;
+    }
+
+
+    private int insertReportImages(Long reportId, AccidentReportRequestDTO reportDTO, Statement stmt) throws Exception {
+        int rowsInserted = 0;
+
+        if (reportDTO.imageDTOs != null && !reportDTO.imageDTOs.isEmpty()) {
+            for (ImageDTO imageDTO : reportDTO.imageDTOs) {
+                if (imageDTO.imageData != null && !imageDTO.imageData.isEmpty()) {
+                    String imagePath = generalMethods.saveBase64ToFile(imageDTO.imageData, "image", ".jpg");
+                    String imageQuery = queryStore.getInsertImageQuery(imagePath, reportId);
+                    rowsInserted += stmt.executeUpdate(imageQuery);
+                }
+            }
+        }
+
+        return rowsInserted;
+    }
+    
 
     public AccidentReportResponseDTO getAccidentReportById(String reportId) {
         String query = queryStore.getSelectByReportId(reportId);
