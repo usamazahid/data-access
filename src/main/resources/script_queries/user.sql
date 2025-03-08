@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS users (
     verification_status VARCHAR(20) DEFAULT 'N' ,   --N not verified and verified Y,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     device_token VARCHAR(255),
-    device_id VARCHAR(255)
+    device_id VARCHAR(255),
+    designation VARCHAR(255) DEFAULT 'citizen'
 );
 
 
@@ -72,17 +73,19 @@ CREATE TABLE IF NOT EXISTS user_permissions (
 --************************************** Data Insertion **************************************
 
 -- Insert Users
-INSERT INTO users (username, password_hash, email, mobile_number) VALUES 
-    ('farman', 'test', 'farman@gmail.com', '03001'),
-    ('test', 'test', 'test@gmail.com', '03002'),
-    ('ambulance', 'test', 'ambulance@gmail.com', '03003')
+INSERT INTO users (username, password_hash, email, mobile_number,designation) VALUES 
+    ('farman', 'test', 'admin@gmail.com', '03001','CEO'),
+    ('test', 'test', 'citizen@gmail.com', '03002','citizen'),
+    ('ambulance', 'test', 'ambulance@gmail.com', '03003','driver'),
+    ('officer', 'test', 'officer@gmail.com', '03004','officer grade 2')
 ON CONFLICT (username) DO NOTHING;
 
 -- Insert Roles
 INSERT INTO roles (role_name) VALUES 
     ('admin'), 
     ('citizen'), 
-    ('ambulance')
+    ('ambulance'),
+    ( 'officer')
 ON CONFLICT (role_name) DO NOTHING;
 
 -- Insert Permissions
@@ -106,7 +109,8 @@ INSERT INTO permissions (permission_name) VALUES
     ('update_users'),
     ('update_accident_report'),
     ('assign_ambulance'),
-    ('authorized_login')
+    ('authorized_login'),
+    ('investigation_form')
 ON CONFLICT (permission_name) DO NOTHING;
 
 -- Insert Role Permissions for "admin" role
@@ -140,11 +144,22 @@ WHERE permission_name IN (
 )
 ON CONFLICT DO NOTHING;
 
+-- Insert Role Permissions for "officer" role
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT (SELECT id FROM roles WHERE role_name = 'officer'), id FROM permissions 
+WHERE permission_name IN (
+    'dashboard_view', 'view_profile', 'view_history', 
+    'profile_edit', 'call_ambulance', 'investigation_form'
+)
+ON CONFLICT DO NOTHING;
+
+
 -- Assign roles to users
 INSERT INTO user_roles (user_id, role_id) VALUES 
     ((SELECT id FROM users WHERE username = 'farman'), (SELECT id FROM roles WHERE role_name = 'admin')),
     ((SELECT id FROM users WHERE username = 'test'), (SELECT id FROM roles WHERE role_name = 'citizen')),
-    ((SELECT id FROM users WHERE username = 'ambulance'), (SELECT id FROM roles WHERE role_name = 'ambulance'))
+    ((SELECT id FROM users WHERE username = 'ambulance'), (SELECT id FROM roles WHERE role_name = 'ambulance')),
+    ((SELECT id FROM users WHERE username = 'officer'), (SELECT id FROM roles WHERE role_name = 'officer'))
 ON CONFLICT DO NOTHING;
 
 -- Assign direct permissions to users
