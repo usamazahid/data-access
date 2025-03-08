@@ -6,6 +6,7 @@ import org.irs.dto.DriverDTO;
 import org.irs.dto.ImageDTO;
 import org.irs.dto.PassengerDTO;
 import org.irs.dto.VehicleDTO;
+import org.irs.dto.VehicleFitnessDTO;
 import org.irs.dto.WitnessDTO;
 import org.irs.util.ConstantValues;
 import org.irs.util.GeneralMethods;
@@ -101,6 +102,13 @@ public class AccidentReportService {
         if (reportDTO.witnesses != null && !reportDTO.witnesses.isEmpty()) {
             for (WitnessDTO witness : reportDTO.witnesses) {
                 rowsInserted += stmt.executeUpdate(queryStore.getInsertWitnessQuery(witness, reportId));
+            }
+        }
+
+        if (reportDTO.vehicleFitnessDetails != null && !reportDTO.vehicleFitnessDetails.isEmpty()) {
+            for (VehicleFitnessDTO fitness : reportDTO.vehicleFitnessDetails) {
+                String fitnessQuery = queryStore.getInsertVehicleFitnessQuery(fitness, reportId);
+                rowsInserted += stmt.executeUpdate(fitnessQuery);
             }
         }
         if (reportDTO.followUp != null) {

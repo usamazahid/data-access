@@ -132,6 +132,18 @@ CREATE TABLE IF NOT EXISTS follow_up_actions (
     case_referred_to VARCHAR(100)
 );
 
+-- 🚀 SQL Script for Vehicle Fitness & Document Verification
 
--- 🚀 Ready to support detailed accident reporting with video and multiple images! Let me know if you want any adjustments or optimizations. ✨
+CREATE TABLE public.accident_vehicle_fitness (
+    fitness_id SERIAL PRIMARY KEY,
+    report_id INT NOT NULL,
+    vehicle_no VARCHAR(50) NOT NULL,
+    fitness_certificate_valid BOOLEAN NOT NULL,
+    expiry_date DATE,
+    road_tax_status VARCHAR(50),
+    insurance_status VARCHAR(50),
 
+    -- Foreign Key linking to accident_reports
+    CONSTRAINT accident_vehicle_fitness_report_id_fkey FOREIGN KEY (report_id) 
+    REFERENCES public.accident_reports(report_id) ON DELETE CASCADE
+);

@@ -7,6 +7,7 @@ import org.irs.dto.EvidenceDTO;
 import org.irs.dto.FollowUpDTO;
 import org.irs.dto.PassengerDTO;
 import org.irs.dto.VehicleDTO;
+import org.irs.dto.VehicleFitnessDTO;
 import org.irs.dto.WitnessDTO;
 
 import jakarta.inject.Singleton;
@@ -207,9 +208,13 @@ public class Report {
                     .isSketchPrepared() + ");";
     }
 
-    // 🚀 Add this query to QueryStore
     public String getInsertImageQuery(String imageUri, Long reportId) {
         return "INSERT INTO public.accident_report_images (report_id, image_uri) VALUES (" + reportId + ", '" + imageUri + "');";
+    }
+
+    public String getInsertVehicleFitnessQuery(VehicleFitnessDTO fitness, Long reportId) {
+        return "INSERT INTO public.accident_vehicle_fitness (report_id, vehicle_no, fitness_certificate_valid, expiry_date, road_tax_status, insurance_status) VALUES (" +
+                reportId + ", '" + fitness.getVehicleNo() + "', " + fitness.isFitnessCertificateValid() + ", '" + fitness.getExpiryDate() + "', '" + fitness.getRoadTaxStatus() + "', '" + fitness.getInsuranceStatus() + "');";
     }
 
     

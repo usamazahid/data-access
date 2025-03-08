@@ -43,7 +43,7 @@ public class AccidentReportRequestDTO {
     public FollowUpDTO followUp;
     public EvidenceDTO evidence;
     public List<ImageDTO> imageDTOs;
-
+    public List<VehicleFitnessDTO> vehicleFitnessDetails;
     @Override
     public String toString() {
         return "AccidentReportRequestDTO [latitude=" + latitude + ", longitude=" + longitude + ", location=" + location
