@@ -1,3 +1,10 @@
+--postgrel extension of postgis
+--step1: sudo apt install postgis postgresql-17-postgis-3
+--step2: sudo systemctl restart postgresql
+--step3: SELECT * FROM pg_available_extensions WHERE name = 'postgis';
+--step4: 
+CREATE EXTENSION postgis;
+SELECT postgis_version();
 
 
 CREATE TABLE public.accident_reports (
@@ -5,6 +12,7 @@ CREATE TABLE public.accident_reports (
 	latitude numeric(9, 6) NULL,
 	longitude numeric(9, 6) NULL,
 	accident_location varchar(255) NULL,
+    gis_coordinates GEOMETRY(Point, 4326) NULL,
 	vehicle_involved_id int4 NULL,
 	patient_victim_id int4 NULL,
 	accident_type_id int4 NULL,
@@ -36,6 +44,15 @@ CREATE TABLE public.accident_reports (
 	CONSTRAINT accident_reports_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
 	CONSTRAINT accident_reports_vehicle_involved_id_fkey FOREIGN KEY (vehicle_involved_id) REFERENCES public.vehicle_involved(id)
 );
+
+
+
+-- Convert existing latitude & longitude into the PostGIS geometry format
+UPDATE accident_reports 
+SET gis_coordinates = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326);
+
+CREATE INDEX accidents_location_gist ON accident_reports USING GIST(gis_coordinates);
+
 
 
 -- Separate table for image URIs

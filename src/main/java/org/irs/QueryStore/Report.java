@@ -16,11 +16,12 @@ import jakarta.inject.Singleton;
 public class Report {
 
     public String getInsertAccidentReportQuery(AccidentReportRequestDTO reportDTO) {
-        String query = "INSERT INTO public.accident_reports (latitude, longitude, accident_location, vehicle_involved_id, " +
+        String query = "INSERT INTO public.accident_reports (gis_coordinates,latitude, longitude, accident_location, vehicle_involved_id, " +
                        "patient_victim_id, accident_type_id, user_id, cause, num_affecties, age, gender, " +
                        "image_uri, audio_uri, video_uri, status, description, weather_condition, visibility, " +
                        "road_surface_condition, road_type, road_markings, officer_name, officer_designation, officer_contact_no, " +
                        "preliminary_fault, officer_notes) VALUES (" +
+                       "ST_GeomFromText('POINT(" + reportDTO.longitude + " " + reportDTO.latitude + ")', 4326), " +  // Insert as PostGIS point
                        (reportDTO.latitude != null ? reportDTO.latitude : "0") + ", " +
                        (reportDTO.longitude != null ? reportDTO.longitude : "0") + ", " +
                        (reportDTO.nearestLandMark != null ? "'" + reportDTO.nearestLandMark + "'" : "NULL") + ", " +
