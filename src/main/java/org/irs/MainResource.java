@@ -137,6 +137,13 @@ public class MainResource {
       }
 
 
+    @GET
+    @Path("heatmap/{range}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<AccidentReportResponseDTO> getAccidentHeatmapData(@PathParam("range") String range) {
+        return accidentReportService.getAccidentHeatmapData(range);
+    }
+
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)

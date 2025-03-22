@@ -179,6 +179,49 @@ public class AccidentReportService {
         return responseDTO;
     }
 
+
+    public List<AccidentReportResponseDTO> getAccidentHeatmapData(String range) {
+        String interval = parseRangeToInterval(range);
+        String query = queryStore.getHeatMapData(interval);
+    
+
+        List<AccidentReportResponseDTO> accidentData = new ArrayList<>();
+    
+        try (Connection con = datasource.getConnection(); 
+             Statement stmt = con.createStatement(); 
+             ResultSet rs = stmt.executeQuery(query)) {
+    
+            while (rs.next()) {
+                AccidentReportResponseDTO accidentReportResponseDTO=new AccidentReportResponseDTO();
+                accidentReportResponseDTO.id = String.valueOf(rs.getLong("report_id")); 
+                accidentReportResponseDTO.latitude = rs.getDouble("latitude");
+                accidentReportResponseDTO.longitude = rs.getDouble("longitude");
+                accidentData.add(accidentReportResponseDTO);
+           
+            } 
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    
+        return accidentData;
+    }
+
+    private String parseRangeToInterval(String range) {
+        if (range!=null && range.matches("^[0-9]+[dwm y]$")) {
+            char unit = range.charAt(range.length() - 1);
+            String value = range.substring(0, range.length() - 1);
+            
+            switch (unit) {
+                case 'd': return value + " days";
+                case 'w': return value + " weeks";
+                case 'm': return value + " months";
+                case 'y': return value + " years";
+                default:  return "1 year"; // Default fallback
+            }
+        }
+        return "1 year"; // Default fallback
+    }
+
     public List<AccidentReportResponseDTO> getAccidentReportsByUserId(String userId) {
         String query = queryStore.getSelectByUserId(userId);
         List<AccidentReportResponseDTO> reports = new ArrayList<>();

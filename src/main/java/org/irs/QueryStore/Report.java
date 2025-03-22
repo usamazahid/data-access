@@ -218,5 +218,11 @@ public class Report {
                 reportId + ", '" + fitness.getVehicleNo() + "', " + fitness.isFitnessCertificateValid() + ", '" + fitness.getExpiryDate() + "', '" + fitness.getRoadTaxStatus() + "', '" + fitness.getInsuranceStatus() + "');";
     }
 
+    public String getHeatMapData(String interval){
+        return "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude " +
+        "FROM accident_reports " +
+        "WHERE created_at >= NOW() - INTERVAL '" + interval + "'";
+    }
+
     
 }
