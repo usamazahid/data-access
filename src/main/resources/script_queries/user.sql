@@ -110,7 +110,8 @@ INSERT INTO permissions (permission_name) VALUES
     ('update_accident_report'),
     ('assign_ambulance'),
     ('authorized_login'),
-    ('investigation_form')
+    ('investigation_form'),
+    ('view_offline_reports')
 ON CONFLICT (permission_name) DO NOTHING;
 
 -- Insert Role Permissions for "admin" role
@@ -140,7 +141,7 @@ INSERT INTO role_permissions (role_id, permission_id)
 SELECT (SELECT id FROM roles WHERE role_name = 'citizen'), id FROM permissions 
 WHERE permission_name IN (
     'dashboard_view', 'view_profile', 'view_history', 
-    'profile_edit', 'call_ambulance', 'report_accident'
+    'profile_edit', 'call_ambulance', 'report_accident','view_offline_reports'
 )
 ON CONFLICT DO NOTHING;
 
@@ -149,7 +150,7 @@ INSERT INTO role_permissions (role_id, permission_id)
 SELECT (SELECT id FROM roles WHERE role_name = 'officer'), id FROM permissions 
 WHERE permission_name IN (
     'dashboard_view', 'view_profile', 'view_history', 
-    'profile_edit', 'call_ambulance', 'investigation_form'
+    'profile_edit', 'call_ambulance', 'investigation_form','view_offline_reports'
 )
 ON CONFLICT DO NOTHING;
 
