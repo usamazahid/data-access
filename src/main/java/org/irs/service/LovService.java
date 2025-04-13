@@ -17,6 +17,7 @@ import org.irs.dto.AccidentTypesDTO;
 import org.irs.dto.ApparentCauseDTO;
 import org.irs.dto.CaseReferredToDTO;
 import org.irs.dto.FaultAssessmentDTO;
+import org.irs.dto.GenderTypesDTO;
 import org.irs.dto.ImageDTO;
 import org.irs.dto.LovResponseDTO;
 import org.irs.dto.OrganizationsDTO;
@@ -50,8 +51,26 @@ public class LovService {
             }
         } catch (Exception ex) {
 
+            ex.printStackTrace();
         }
-        System.out.println(response.toString());
+        System.out.println("get accident types: "+response.toString());
+        return response;
+    }
+
+    
+    public List<GenderTypesDTO> getGenderTypes() {
+        List<GenderTypesDTO> response = new ArrayList<GenderTypesDTO>();
+        System.out.println("Getting Gender Types: ");
+        String query = lov.getGenderTypes();
+        try (Connection con = datasource.getConnection(); Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                response.add(new GenderTypesDTO(rs.getString("id"), rs.getString("label"), rs.getString("description")));
+            }
+        } catch (Exception ex) {
+
+            ex.printStackTrace();
+        }
+        System.out.println("gender types: "+response.toString());
         return response;
     }
 
@@ -71,6 +90,7 @@ public class LovService {
             }
         } catch (Exception ex) {
 
+            ex.printStackTrace();
         }
         System.out.println("Organizations: " + response);
         return response;
@@ -88,6 +108,8 @@ public class LovService {
                     rs.getString("label"))); 
             }
         } catch (Exception ex) {
+            
+            ex.printStackTrace();
 
         }
         System.out.println("Vehicle Involved: " + response);
@@ -107,6 +129,8 @@ public class LovService {
                     rs.getString("label"))); 
             }
         } catch (Exception ex) {
+            
+            ex.printStackTrace();
 
         }
         System.out.println("Response Patient victim."+ response.toString());
@@ -122,6 +146,8 @@ public class LovService {
             }
         } catch (Exception ex) {
             // Handle exception
+            
+            ex.printStackTrace();
         }
         return response;
     }
@@ -135,6 +161,8 @@ public class LovService {
             }
         } catch (Exception ex) {
             // Handle exception
+            
+            ex.printStackTrace();
         }
         return response;
     }
@@ -148,6 +176,8 @@ public class LovService {
             }
         } catch (Exception ex) {
             // Handle exception
+            
+            ex.printStackTrace();
         }
         return response;
     }
@@ -161,6 +191,8 @@ public class LovService {
             }
         } catch (Exception ex) {
             // Handle exception
+            
+            ex.printStackTrace();
         }
         return response;
     }
@@ -173,6 +205,8 @@ public class LovService {
             }
         } catch (Exception ex) {
             // Handle exception
+            
+            ex.printStackTrace();
         }
         return response;
     }
@@ -185,6 +219,8 @@ public class LovService {
                 response.add(new WeatherConditionDTO(rs.getString("id"), rs.getString("condition")));
             }
         } catch (Exception ex) {
+            
+            ex.printStackTrace();
             // Handle exception
         }
         return response;
@@ -198,6 +234,8 @@ public class LovService {
                 response.add(new VisibilityDTO(rs.getString("id"), rs.getString("level")));
             }
         } catch (Exception ex) {
+            
+            ex.printStackTrace();
             // Handle exception
         }
         return response;
@@ -211,6 +249,8 @@ public class LovService {
             }
         } catch (Exception ex) {
             // Handle exception
+            
+            ex.printStackTrace();
         }
         return response;
     }
@@ -224,7 +264,7 @@ public class LovService {
             "accident_types", "vehicle_involved", "patient_victim", 
             "apparent_cause", "weather_condition", "visibility", 
             "road_surface_condition", "road_type", "road_signage", 
-            "case_referred_to", "preliminary_fault_assessment"
+            "case_referred_to", "preliminary_fault_assessment","gender_types"
         };
 
         try (Connection con = datasource.getConnection();
@@ -269,7 +309,8 @@ public class LovService {
         Optional.ofNullable(getRoadType()).orElse(new ArrayList<>()),
         Optional.ofNullable(getRoadSignage()).orElse(new ArrayList<>()),
         Optional.ofNullable(getCaseReferredTo()).orElse(new ArrayList<>()),
-        Optional.ofNullable(getFaultAssessment()).orElse(new ArrayList<>())
+        Optional.ofNullable(getFaultAssessment()).orElse(new ArrayList<>()),
+        Optional.ofNullable(getGenderTypes()).orElse(new ArrayList<>())
     );
     return response;
     }

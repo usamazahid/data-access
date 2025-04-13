@@ -68,4 +68,9 @@ public class Lovs {
         String query = "SELECT * FROM preliminary_fault_assessment";
         return query;
     }
+
+    public String getGenderTypes() {
+        String query = "SELECT * FROM gender_types";
+        return query;
+    }
 }

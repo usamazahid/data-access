@@ -232,4 +232,20 @@ INSERT INTO preliminary_fault_assessment (fault) VALUES
 ('Shared Fault'),
 ('Undetermined');
 
--- Let me know if you want me to add relationships or normalize the design further! 🚀
+
+-- Create accident_types table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.gender_types (
+    id SERIAL PRIMARY KEY,
+    label VARCHAR NOT NULL UNIQUE,
+    description VARCHAR NULL
+);
+
+
+
+-- Insert data into gender_types table, ignoring duplicates
+INSERT INTO public.gender_types (label, description)
+VALUES
+    ('female',NULL),
+    ('male',NULL),
+    ('other', NULL)
+ON CONFLICT (label) DO NOTHING;
