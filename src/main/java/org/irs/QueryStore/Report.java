@@ -1,6 +1,8 @@
 package org.irs.QueryStore;
 
 
+import java.util.function.Function;
+
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.DriverDTO;
 import org.irs.dto.EvidenceDTO;
@@ -14,44 +16,61 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class Report {
-
     public String getInsertAccidentReportQuery(AccidentReportRequestDTO reportDTO) {
-        String query = "INSERT INTO public.accident_reports (gis_coordinates,latitude, longitude, accident_location, vehicle_involved_id, " +
-                       "patient_victim_id, accident_type_id, user_id, cause, num_affecties, age, gender, " +
-                       "image_uri, audio_uri, video_uri, status, description, weather_condition, visibility, " +
-                       "road_surface_condition, road_type, road_markings, officer_name, officer_designation, officer_contact_no, " +
-                       "preliminary_fault, officer_notes) VALUES (" +
-                       "ST_GeomFromText('POINT(" + reportDTO.longitude + " " + reportDTO.latitude + ")', 4326), " +  // Insert as PostGIS point
-                       (reportDTO.latitude != null ? reportDTO.latitude : "0") + ", " +
-                       (reportDTO.longitude != null ? reportDTO.longitude : "0") + ", " +
-                       (reportDTO.nearestLandMark != null ? "'" + reportDTO.nearestLandMark + "'" : "NULL") + ", " +
-                       (reportDTO.vehicleInvolvedId != null ? reportDTO.vehicleInvolvedId : "NULL") + ", " +
-                       (reportDTO.patientVictimId != null ? reportDTO.patientVictimId : "NULL") + ", " +
-                       (reportDTO.accidentTypeId != null ? reportDTO.accidentTypeId : "NULL") + ", " +
-                       (reportDTO.userId != null ? reportDTO.userId : "NULL") + ", " +
-                       reportDTO.cause + ", " +
-                       (reportDTO.numAffecties != null ? reportDTO.numAffecties : "NULL") + ", " +
-                       (reportDTO.age != null ? reportDTO.age : "NULL") + ", " +
-                       reportDTO.gender + ", '" +
-                       (reportDTO.imageUri != null ? reportDTO.imageUri : "") + "', '" +
-                       (reportDTO.audioUri != null ? reportDTO.audioUri : "") + "', '" +
-                       (reportDTO.videoUri != null ? reportDTO.videoUri : "") + "', '" +
-                       (reportDTO.status != null ? reportDTO.status : "pending") + "', '" +
-                       (reportDTO.description != null ? reportDTO.description : "") + "', " +
-                       (reportDTO.weatherCondition != null ? reportDTO.weatherCondition : "") + ", " +
-                       (reportDTO.visibility != null ? reportDTO.visibility : "") + ", " +
-                       (reportDTO.roadSurfaceCondition != null ? reportDTO.roadSurfaceCondition : "") + ", " +
-                       (reportDTO.roadType != null ? reportDTO.roadType : "") + ", " +
-                       (reportDTO.roadMarkings != null ? reportDTO.roadMarkings : "") + ", '" +
-                       (reportDTO.officerName != null ? reportDTO.officerName : "") + "', '" +
-                       (reportDTO.officerDesignation != null ? reportDTO.officerDesignation : "") + "', '" +
-                       (reportDTO.officerContactNo != null ? reportDTO.officerContactNo : "") + "', " +
-                       (reportDTO.preliminaryFault != null ? reportDTO.preliminaryFault : "") + ", '" +
-                       (reportDTO.officerNotes != null ? reportDTO.officerNotes : "") + "')";
-        
-        System.out.println(query);
-        return query;
-    }
+    // Helper for escaping strings safely
+    Function<String, String> escapeStr = str -> str != null ? "'" + str.replace("'", "''") + "'" : "NULL";
+
+    String query = "INSERT INTO public.accident_reports (" +
+            "gis_coordinates, latitude, longitude, accident_location, vehicle_involved_id, " +
+            "patient_victim_id, accident_type_id, user_id, cause, num_affecties, age, gender, " +
+            "image_uri, audio_uri, video_uri, status, description, weather_condition, visibility, " +
+            "road_surface_condition, road_type, road_markings,preliminary_fault, officer_name, officer_designation, officer_contact_no, " +
+            "officer_notes) VALUES (" +
+
+            // PostGIS point
+            "ST_GeomFromText('POINT(" + reportDTO.longitude + " " + reportDTO.latitude + ")', 4326), " +
+
+            // Latitude & Longitude
+            (reportDTO.latitude != null ? reportDTO.latitude : "0") + ", " +
+            (reportDTO.longitude != null ? reportDTO.longitude : "0") + ", " +
+
+            // Strings
+            escapeStr.apply(reportDTO.nearestLandMark) + ", " +
+
+            // Integers (IDs, int values)
+            (reportDTO.vehicleInvolvedId != null ? reportDTO.vehicleInvolvedId : "NULL") + ", " +
+            (reportDTO.patientVictimId != null ? reportDTO.patientVictimId : "NULL") + ", " +
+            (reportDTO.accidentTypeId != null ? reportDTO.accidentTypeId : "NULL") + ", " +
+            (reportDTO.userId != null ? reportDTO.userId : "NULL") + ", " +
+            (reportDTO.cause != null ? reportDTO.cause : "NULL") + ", " + // cause is int
+            (reportDTO.numAffecties != null ? reportDTO.numAffecties : "NULL") + ", " +
+            (reportDTO.age != null ? reportDTO.age : "NULL") + ", " +
+            (reportDTO.gender != null ? reportDTO.gender : "NULL") + ", " +
+            // Strings
+            escapeStr.apply(reportDTO.imageUri != null ? reportDTO.imageUri : "") + ", " +
+            escapeStr.apply(reportDTO.audioUri != null ? reportDTO.audioUri : "") + ", " +
+            escapeStr.apply(reportDTO.videoUri != null ? reportDTO.videoUri : "") + ", " +
+            escapeStr.apply(reportDTO.status != null ? reportDTO.status : "pending") + ", " +
+            escapeStr.apply(reportDTO.description != null ? reportDTO.description : "") + ", " +
+
+            // Integers
+            (reportDTO.weatherCondition != null ? reportDTO.weatherCondition : "NULL") + ", " +
+            (reportDTO.visibility != null ? reportDTO.visibility : "NULL") + ", " +
+            (reportDTO.roadSurfaceCondition != null ? reportDTO.roadSurfaceCondition : "NULL") + ", " +
+            (reportDTO.roadType != null ? reportDTO.roadType : "NULL") + ", " +
+            (reportDTO.roadMarkings != null ? reportDTO.roadMarkings : "NULL") + ", " +
+            (reportDTO.preliminaryFault != null ? reportDTO.preliminaryFault : "NULL") + ", " +
+            // Strings
+            escapeStr.apply(reportDTO.officerName != null ? reportDTO.officerName : "") + ", " +
+            escapeStr.apply(reportDTO.officerDesignation != null ? reportDTO.officerDesignation : "") + ", " +
+            escapeStr.apply(reportDTO.officerContactNo != null ? reportDTO.officerContactNo : "") + ", " +
+            escapeStr.apply(reportDTO.officerNotes != null ? reportDTO.officerNotes : "") +
+
+            ")";
+    
+    System.out.println(query);
+    return query;
+}
 
     public String getSelectByReportId(String reportId) {
         return """
@@ -180,7 +199,7 @@ public class Report {
 
     public String getInsertVehicleQuery(VehicleDTO vehicle, Long reportId) {
         String query= "INSERT INTO vehicle_details (report_id, registration_no, type, condition, fitness_certificate_status, road_tax_status, insurance_status) VALUES ("
-                + reportId + ", '" + vehicle.getRegistrationNo() + "', " + vehicle.getType() + ", '" + vehicle.getCondition() + "', '" + vehicle.getFitnessCertificateStatus() + "', '" + vehicle.getRoadTaxStatus() + "', '" + vehicle.getInsuranceStatus() + "');";
+                + reportId + ", '" + vehicle.getRegistrationNo() + "', " + (vehicle.getType()!=null?vehicle.getType():"NULL") + ", '" + vehicle.getCondition() + "', '" + vehicle.getFitnessCertificateStatus() + "', '" + vehicle.getRoadTaxStatus() + "', '" + vehicle.getInsuranceStatus() + "');";
         System.out.println(query);
         return query;
         }
@@ -210,7 +229,7 @@ public class Report {
 
     public String getInsertFollowUpQuery(FollowUpDTO followUp, Long reportId) {
         String query= "INSERT INTO follow_up_actions (report_id, fir_registered, fir_number, challan_issued, challan_number, case_referred_to) VALUES ("
-                + reportId + ", " + followUp.isFirRegistered() + ", '" + followUp.getFirNumber() + "', " + followUp.isChallanIssued() + ", '" + followUp.getChallanNumber() + "', " + followUp.getCaseReferredTo() + ");";
+                + reportId + ", " + followUp.isFirRegistered() + ", '" + followUp.getFirNumber() + "', " + followUp.isChallanIssued() + ", '" + followUp.getChallanNumber() + "', " + (followUp.getCaseReferredTo()!=null?followUp.getCaseReferredTo():"NULL" )+ ");";
             System.out.println(query);
             return query;
         }

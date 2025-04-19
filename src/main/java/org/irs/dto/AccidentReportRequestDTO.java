@@ -10,10 +10,16 @@ public class AccidentReportRequestDTO {
     public Integer patientVictimId;
     public Integer accidentTypeId;
     public Integer userId;
-    public String cause;
+    public Integer cause;
     public Integer numAffecties;
     public Integer age;
-    public String gender;
+    public Integer gender;
+    public Integer weatherCondition;
+    public Integer visibility;
+    public Integer roadSurfaceCondition;
+    public Integer roadType;
+    public Integer roadMarkings; 
+    public Integer preliminaryFault;
     public String imageUri;
     public String audioUri;
     public String imageData;
@@ -25,15 +31,10 @@ public class AccidentReportRequestDTO {
     public String createdAt;
     public String nearestLandMark;
     public String videoUri;
-    public String weatherCondition;
-    public String visibility;
-    public String roadSurfaceCondition;
-    public String roadType;
-    public String roadMarkings;
     public String officerName;
     public String officerDesignation;
     public String officerContactNo;
-    public String preliminaryFault;
+   
     public String officerNotes;
 
     public List<VehicleDTO> vehicles;
