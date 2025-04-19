@@ -150,7 +150,7 @@ INSERT INTO role_permissions (role_id, permission_id)
 SELECT (SELECT id FROM roles WHERE role_name = 'officer'), id FROM permissions 
 WHERE permission_name IN (
     'dashboard_view', 'view_profile', 'view_history', 
-    'profile_edit', 'call_ambulance', 'investigation_form','view_offline_reports', 'report_accident'
+    'profile_edit', 'call_ambulance', 'investigation_form','view_offline_reports', 'view_report'
 )
 ON CONFLICT DO NOTHING;
 
