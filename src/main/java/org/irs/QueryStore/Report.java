@@ -256,12 +256,12 @@ public class Report {
         }
 
     public String getHeatMapData(String interval){
-        String query= "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude " +
+        String query= "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity " +
         "FROM accident_reports " +
         "WHERE created_at >= NOW() - INTERVAL '" + interval + "'";
         System.out.println(query);
         return query;
     }
 
-    
+
 }

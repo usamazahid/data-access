@@ -12,6 +12,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.math3.ml.clustering.Cluster;
+import org.apache.commons.math3.ml.clustering.DoublePoint;
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
 import org.irs.dto.AccidentTypesDTO;
@@ -312,6 +315,33 @@ public class MainResource {
     @Path("/fetchAllLovs")
     public LovResponseDTO fetchAllLovs() {
         return lovService.fetchAllLovs();
-}
+    }
+    
+    @GET
+    @Path("/getClusteredAccidentsDBSCAN/{range}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getClusteredAccidentsDBSCAN(@PathParam("range") String range) {
+        try {
+            List<Map<String, Object>> clusters = accidentReportService.getClusteredAccidentsDBSCAN(range);
+            return Response.ok(clusters).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error fetching clustered accidents").build();
+        }
+    }
+
+
+    @GET
+    @Path("/getClusteredAccidents/{range}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getClusteredAccidents(@PathParam("range") String range) {
+        try {
+            List<Cluster<DoublePoint>> clusters = accidentReportService.getClusteredAccidents(range);
+            return Response.ok(clusters).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error fetching clustered accidents").build();
+        }
+    }
 
 }

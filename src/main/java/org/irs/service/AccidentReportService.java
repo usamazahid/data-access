@@ -24,7 +24,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement; 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
+import org.apache.commons.math3.ml.clustering.DoublePoint;
+import org.apache.commons.math3.ml.clustering.Cluster;
+
 
 @RequestScoped
 public class AccidentReportService {
@@ -196,6 +204,7 @@ public class AccidentReportService {
                 accidentReportResponseDTO.id = String.valueOf(rs.getLong("report_id")); 
                 accidentReportResponseDTO.latitude = rs.getDouble("latitude");
                 accidentReportResponseDTO.longitude = rs.getDouble("longitude");
+                accidentReportResponseDTO.severity = rs.getInt("severity");
                 accidentData.add(accidentReportResponseDTO);
            
             } 
@@ -421,5 +430,74 @@ public class AccidentReportService {
         return responseDTO;
     }
     
+ 
+    public List<Map<String, Object>> getClusteredAccidentsDBSCAN(String range) {
+        List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range);
+
+        // Convert accidents to points
+        List<DoublePoint> points = accidents.stream()
+            .map(accident -> new DoublePoint(new double[]{accident.latitude, accident.longitude}))
+            .collect(Collectors.toList());
+
+        // Apply DBSCAN clustering
+        DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<>(0.01, 3); // Adjust epsilon and min points
+        List<Cluster<DoublePoint>> clusters = clusterer.cluster(points);
+
+        // Prepare the response
+        List<Map<String, Object>> response = new ArrayList<>();
+        for (Cluster<DoublePoint> cluster : clusters) {
+            Map<String, Object> clusterData = new HashMap<>();
+
+            // Calculate cluster center
+            double sumLat = 0, sumLon = 0;
+            List<Map<String, Object>> clusterPoints = new ArrayList<>();
+            for (DoublePoint point : cluster.getPoints()) {
+                double latitude = point.getPoint()[0];
+                double longitude = point.getPoint()[1];
+                sumLat += latitude;
+                sumLon += longitude;
+
+                // Find the original accident data
+                AccidentReportResponseDTO accident = accidents.stream()
+                    .filter(a -> a.latitude == latitude && a.longitude == longitude)
+                    .findFirst()
+                    .orElse(null);
+
+                if (accident != null) {
+                    Map<String, Object> pointData = new HashMap<>();
+                    pointData.put("id", accident.id);
+                    pointData.put("latitude", accident.latitude);
+                    pointData.put("longitude", accident.longitude);
+                    pointData.put("severity", accident.severity);
+                    clusterPoints.add(pointData);
+                }
+            }
+
+            // Add cluster center and points
+            clusterData.put("center", Map.of(
+                "latitude", sumLat / cluster.getPoints().size(),
+                "longitude", sumLon / cluster.getPoints().size()
+            ));
+            clusterData.put("points", clusterPoints);
+
+            response.add(clusterData);
+        }
+
+        return response;
+    }
+
+    public List<Cluster<DoublePoint>> getClusteredAccidents(String range) {
+      List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range);
+
+    // Convert accidents to points
+    List<DoublePoint> points = accidents.stream()
+        .map(accident -> new DoublePoint(new double[]{accident.latitude, accident.longitude}))
+        .collect(Collectors.toList());
+
+    // Apply DBSCAN clustering
+    DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<>(0.01, 3); // Adjust epsilon and min points
+    return clusterer.cluster(points);
+    }
+
 
 }

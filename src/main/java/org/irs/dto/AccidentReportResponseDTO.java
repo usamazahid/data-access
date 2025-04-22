@@ -30,6 +30,7 @@ public class AccidentReportResponseDTO {
    public String reportedBy; 
    public String imageData;
    public String audioData;
+   public Integer severity;
     @Override
     public String toString() {
         return "AccidentReportResponseDTO [id=" + id + ", error=" + error + ", rowsInserted=" + rowsInserted

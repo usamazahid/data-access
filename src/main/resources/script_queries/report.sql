@@ -24,6 +24,7 @@ CREATE TABLE public.accident_reports (
 	age int4 NULL,
 	created_at timestamp DEFAULT CURRENT_TIMESTAMP NULL,
 	status varchar(50) DEFAULT 'pending'::character varying NULL,
+    severity int4 DEFAULT 1 NULL,
     image_uri text NULL,
 	audio_uri text NULL,
     video_uri text NULL,
