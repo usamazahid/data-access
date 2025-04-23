@@ -17,29 +17,25 @@ import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DoublePoint;
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
-import org.irs.dto.AccidentTypesDTO;
 import org.irs.dto.ApparentCauseDTO;
 import org.irs.dto.CaseReferredToDTO;
 import org.irs.dto.DispatchRequestDto;
 import org.irs.dto.FaultAssessmentDTO;
+import org.irs.dto.GeneralLovDto;
 import org.irs.dto.LovResponseDTO;
 import org.irs.dto.OrganizationsDTO;
-import org.irs.dto.PatientVictimDTO;
 import org.irs.dto.RoadSignageDTO;
 import org.irs.dto.RoadSurfaceConditionDTO;
 import org.irs.dto.RoadTypeDTO;
 import org.irs.dto.UserRequestDTO;
 import org.irs.dto.UserResponseDTO;
 import org.irs.dto.UserRolesDTO;
-import org.irs.dto.VehicleInvolvedDTO;
 import org.irs.dto.VisibilityDTO;
 import org.irs.dto.WeatherConditionDTO;
 import org.irs.service.AccidentReportService;
 import org.irs.service.DispatchService;
 import org.irs.service.LovService;
 import org.irs.service.UserDetailService;
-
-
 
 @Path("/irs")
 public class MainResource {
@@ -49,16 +45,15 @@ public class MainResource {
 
     @Inject
     LovService lovService;
-    
+
     @Inject
     AccidentReportService accidentReportService;
-    
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/getUserData")
-    public UserResponseDTO getUserData(UserRequestDTO request){
+    public UserResponseDTO getUserData(UserRequestDTO request) {
         UserResponseDTO response = userDetailService.getUserData(request);
         return response;
     }
@@ -67,35 +62,35 @@ public class MainResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/getUserRoles")
-    public List<UserRolesDTO> getUserRoles(UserRequestDTO request){
+    public List<UserRolesDTO> getUserRoles(UserRequestDTO request) {
         return userDetailService.getUserRoles(request);
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/getAccidentTypes")
-    public List<AccidentTypesDTO> getAccidentTypes(){
+    public List<GeneralLovDto> getAccidentTypes() {
         return lovService.getAccidentTypes();
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/getOrganizations")
-    public List<OrganizationsDTO> getOrganizations(){
+    public List<OrganizationsDTO> getOrganizations() {
         return lovService.getOrganizations();
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/getVehicleInvolved")
-    public List<VehicleInvolvedDTO> getVehicleInvolved(){
+    public List<GeneralLovDto> getVehicleInvolved() {
         return lovService.getVehicleInvolved();
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/getPatientVictim")
-    public List<PatientVictimDTO> getPatientVictim(){
+    public List<GeneralLovDto> getPatientVictim() {
         return lovService.getPatientVictim();
     }
 
@@ -103,12 +98,11 @@ public class MainResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/saveReportData")
-    public AccidentReportResponseDTO saveReportData(AccidentReportRequestDTO request){
+    public AccidentReportResponseDTO saveReportData(AccidentReportRequestDTO request) {
         AccidentReportResponseDTO response = accidentReportService.saveAccidentReport(request);
         return response;
     }
 
-       
     @GET
     @Path("/getReportByUserId/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -117,28 +111,27 @@ public class MainResource {
 
     }
 
-     @GET
-     @Path("getReportById/{reportId}")
-     @Produces(MediaType.APPLICATION_JSON)
-     public AccidentReportResponseDTO getAccidentReport(@PathParam("reportId") String reportId) {
-         return accidentReportService.getAccidentReportById(reportId);
-     }
+    @GET
+    @Path("getReportById/{reportId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public AccidentReportResponseDTO getAccidentReport(@PathParam("reportId") String reportId) {
+        return accidentReportService.getAccidentReportById(reportId);
+    }
 
-     @GET
-     @Path("/getJoinedReportByUserId/{userId}")
-     @Produces(MediaType.APPLICATION_JSON)
-     public List<AccidentReportResponseDTO> getJoinedAccidentReportsByUserId(@PathParam("userId") String userId) {
-         return accidentReportService.getJoinedAccidentReportsByUserId(userId);
- 
-     }
- 
-      @GET
-      @Path("getJoinedReportById/{reportId}")
-      @Produces(MediaType.APPLICATION_JSON)
-      public AccidentReportResponseDTO getJoinedAccidentReport(@PathParam("reportId") String reportId) {
-          return accidentReportService.getJoinedAccidentReportById(reportId);
-      }
+    @GET
+    @Path("/getJoinedReportByUserId/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<AccidentReportResponseDTO> getJoinedAccidentReportsByUserId(@PathParam("userId") String userId) {
+        return accidentReportService.getJoinedAccidentReportsByUserId(userId);
 
+    }
+
+    @GET
+    @Path("getJoinedReportById/{reportId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public AccidentReportResponseDTO getJoinedAccidentReport(@PathParam("reportId") String reportId) {
+        return accidentReportService.getJoinedAccidentReportById(reportId);
+    }
 
     @GET
     @Path("heatmap/{range}")
@@ -154,12 +147,12 @@ public class MainResource {
     public Response createUser(UserRequestDTO request) {
         try {
             userDetailService.createUser(request);
-        return Response.status(Response.Status.CREATED).entity("User registered successfully").build();
-    } catch (IllegalArgumentException e) {
-        return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
-    } catch (Exception e) {
-        return Response.status(Response.Status.BAD_REQUEST).entity("FAILED").build();
-    }
+            return Response.status(Response.Status.CREATED).entity("User registered successfully").build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("FAILED").build();
+        }
 
     }
 
@@ -197,7 +190,7 @@ public class MainResource {
     @Path("dispatch/driver/{driverId}")
     public Response getDispatchesByDriver(@PathParam("driverId") Integer driverId) {
         try {
-           return dispatchService.getDispatchesByDriver(driverId);
+            return dispatchService.getDispatchesByDriver(driverId);
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error retrieving dispatches: " + e.getMessage())
@@ -210,7 +203,8 @@ public class MainResource {
     @Path("dispatch/accept")
     public Response acceptDispatch(DispatchRequestDto dispatchRequestDto) {
         try {
-            dispatchService.acceptDispatch(dispatchRequestDto.dispatchId, dispatchRequestDto.ambulanceId, dispatchRequestDto.reportId);
+            dispatchService.acceptDispatch(dispatchRequestDto.dispatchId, dispatchRequestDto.ambulanceId,
+                    dispatchRequestDto.reportId);
             return Response.ok("Dispatch accepted successfully").build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -224,7 +218,7 @@ public class MainResource {
     @Path("dispatch/pickup/{dispatchId}")
     public Response updatePickup(@PathParam("dispatchId") Integer dispatchId) {
         try {
-             return dispatchService.updatePickup(dispatchId); 
+            return dispatchService.updatePickup(dispatchId);
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error updating pickup time: " + e.getMessage())
@@ -273,7 +267,6 @@ public class MainResource {
         return lovService.getRoadSurfaceCondition();
     }
 
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/getRoadType")
@@ -309,14 +302,13 @@ public class MainResource {
         return lovService.getAllLovs();
     }
 
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchAllLovs")
     public LovResponseDTO fetchAllLovs() {
         return lovService.fetchAllLovs();
     }
-    
+
     @GET
     @Path("/getClusteredAccidentsDBSCAN/{range}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -326,10 +318,10 @@ public class MainResource {
             return Response.ok(clusters).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error fetching clustered accidents").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error fetching clustered accidents")
+                    .build();
         }
     }
-
 
     @GET
     @Path("/getClusteredAccidents/{range}")
@@ -340,7 +332,8 @@ public class MainResource {
             return Response.ok(clusters).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error fetching clustered accidents").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error fetching clustered accidents")
+                    .build();
         }
     }
 

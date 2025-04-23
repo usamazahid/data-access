@@ -249,3 +249,98 @@ VALUES
     ('male',NULL),
     ('other', NULL)
 ON CONFLICT (label) DO NOTHING;
+
+
+
+-- table vehicle condition
+CREATE TABLE IF NOT EXISTS public.vehicle_condition (
+    id SERIAL PRIMARY KEY,
+    label VARCHAR NOT NULL UNIQUE,
+    description VARCHAR NULL
+);
+ 
+INSERT INTO public.vehicle_condition (label, description)
+VALUES
+    ('Minor',NULL),
+    ('Major',NULL),
+    ('Total Loss', NULL)
+ON CONFLICT (label) DO NOTHING;
+
+-- table fitness_certificate_status
+CREATE TABLE IF NOT EXISTS public.fitness_certificate_status (
+    id SERIAL PRIMARY KEY,
+    label VARCHAR NOT NULL UNIQUE,
+    description VARCHAR NULL
+);
+
+ 
+INSERT INTO public.fitness_certificate_status (label, description)
+VALUES
+    ('Valid',NULL),
+    ('Expired',NULL),
+    ('Not Available', NULL)
+ON CONFLICT (label) DO NOTHING;
+
+
+-- table causalities_status
+CREATE TABLE IF NOT EXISTS public.causalities_status (
+    id SERIAL PRIMARY KEY,
+    label VARCHAR NOT NULL UNIQUE,
+    description VARCHAR NULL
+);
+
+ 
+INSERT INTO public.causalities_status (label, description)
+VALUES
+    ('Causalities',NULL),
+    ('Passengers',NULL),
+    ('Injured', NULL)
+ON CONFLICT (label) DO NOTHING;
+
+
+-- table injury_severity
+CREATE TABLE IF NOT EXISTS public.injury_severity (
+    id SERIAL PRIMARY KEY,
+    label VARCHAR NOT NULL UNIQUE,
+    description VARCHAR NULL
+);
+
+ 
+INSERT INTO public.injury_severity (label, description)
+VALUES
+    ('Minor',NULL),
+    ('Major',NULL),
+    ('Fatal', NULL)
+ON CONFLICT (label) DO NOTHING;
+
+
+-- table road_tax_status
+CREATE TABLE IF NOT EXISTS public.road_tax_status (
+    id SERIAL PRIMARY KEY,
+    label VARCHAR NOT NULL UNIQUE,
+    description VARCHAR NULL
+);
+
+ 
+INSERT INTO public.road_tax_status (label, description)
+VALUES
+    ('Paid',NULL),
+    ('Unpaid',NULL),
+    ('Pending', NULL)
+ON CONFLICT (label) DO NOTHING;
+
+
+-- table insurance_status
+CREATE TABLE IF NOT EXISTS public.insurance_status (
+    id SERIAL PRIMARY KEY,
+    label VARCHAR NOT NULL UNIQUE,
+    description VARCHAR NULL
+);
+
+ 
+INSERT INTO public.insurance_status (label, description)
+VALUES
+    ('Active',NULL),
+    ('Expired',NULL),
+    ('Pending Renewal', NULL)
+ON CONFLICT (label) DO NOTHING;

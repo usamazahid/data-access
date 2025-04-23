@@ -1,11 +1,11 @@
 package org.irs.dto;
 
-public class GenderTypesDTO {
+public class GeneralLovDto {
     public String id;
     public String label;
     public String description;
 
-    public GenderTypesDTO(String id, String label, String description) {
+    public GeneralLovDto(String id, String label, String description) {
         this.id = id;
         this.description = description;
         this.label = label;
@@ -13,6 +13,6 @@ public class GenderTypesDTO {
 
     @Override
     public String toString() {
-        return "GenderTypesDTO [id=" + id + ", label=" + label + ", description=" + description + "]";
+        return "GeneralLovDto [id=" + id + ", label=" + label + ", description=" + description + "]";
     }
 }
