@@ -1,8 +1,8 @@
 package org.irs.QueryStore;
 
 
+import jakarta.inject.Singleton;
 import java.util.function.Function;
-
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.DriverDTO;
 import org.irs.dto.EvidenceDTO;
@@ -12,7 +12,7 @@ import org.irs.dto.VehicleDTO;
 import org.irs.dto.VehicleFitnessDTO;
 import org.irs.dto.WitnessDTO;
 
-import jakarta.inject.Singleton;
+
 
 @Singleton
 public class Report {
@@ -255,10 +255,12 @@ public class Report {
         return query;
         }
 
-    public String getHeatMapData(String interval){
+    public String getHeatMapData(String interval, Integer limit){
         String query= "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity " +
         "FROM accident_reports " +
-        "WHERE created_at >= NOW() - INTERVAL '" + interval + "'";
+        "WHERE created_at >= NOW() - INTERVAL '" + interval + "' " +
+        "ORDER BY created_at DESC " + // Order by latest records first
+        "LIMIT " + limit; // Limit the number of records
         System.out.println(query);
         return query;
     }

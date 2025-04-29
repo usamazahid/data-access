@@ -1,5 +1,23 @@
 package org.irs.service;
 
+import io.quarkus.logging.Log;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.commons.math3.ml.clustering.Cluster;
+import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
+import org.apache.commons.math3.ml.clustering.DoublePoint;
+import org.irs.QueryStore.Report;
+import org.irs.database.Datasources;
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
 import org.irs.dto.DriverDTO;
@@ -11,27 +29,9 @@ import org.irs.dto.WitnessDTO;
 import org.irs.util.ConstantValues;
 import org.irs.util.GeneralMethods;
 
-import io.quarkus.logging.Log;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 
-import org.irs.QueryStore.Report;
-import org.irs.database.Datasources;
  
-import java.sql.Connection; 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement; 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
-import org.apache.commons.math3.ml.clustering.DoublePoint;
-import org.apache.commons.math3.ml.clustering.Cluster;
 
 
 @RequestScoped
@@ -190,7 +190,7 @@ public class AccidentReportService {
 
     public List<AccidentReportResponseDTO> getAccidentHeatmapData(String range) {
         String interval = parseRangeToInterval(range);
-        String query = queryStore.getHeatMapData(interval);
+        String query = queryStore.getHeatMapData(interval,1000);
     
 
         List<AccidentReportResponseDTO> accidentData = new ArrayList<>();
@@ -216,19 +216,22 @@ public class AccidentReportService {
     }
 
     private String parseRangeToInterval(String range) {
-        if (range!=null && range.matches("^[0-9]+[dwm y]$")) {
+        if (range != null && range.matches("^[0-9]+[dwm ysMh]$")) { // Added 's' for seconds and 'M' for months
             char unit = range.charAt(range.length() - 1);
             String value = range.substring(0, range.length() - 1);
-            
+
             switch (unit) {
                 case 'd': return value + " days";
                 case 'w': return value + " weeks";
-                case 'm': return value + " months";
+                case 'm': return value + " minutes";
+                case 'M': return value + " months"; // Added case for months
+                case 's': return value + " seconds"; // Added case for seconds
                 case 'y': return value + " years";
-                default:  return "1 year"; // Default fallback
+                case 'h': return value + " years";
+                default:  return "1 month"; // Default fallback
             }
         }
-        return "1 year"; // Default fallback
+        return "1 month"; // Default fallback
     }
 
     public List<AccidentReportResponseDTO> getAccidentReportsByUserId(String userId) {
