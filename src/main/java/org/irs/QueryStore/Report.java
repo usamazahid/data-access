@@ -191,8 +191,46 @@ public class Report {
             LEFT JOIN public.patient_victim pv ON ar.patient_victim_id = pv.id
             LEFT JOIN public.accident_types at ON ar.accident_type_id = at.id
             LEFT JOIN public.users u ON ar.user_id = u.id
-            WHERE u.id = 
-        """+userId;
+            WHERE 
+            u.id = """+userId+" ORDER BY ar.created_at DESC ";
+    }
+
+    public String getJoinedAccidentReportsByUserIdWithPagination(String userId, int offset, int limit) {
+        return """
+            SELECT 
+                ar.report_id, 
+                ar.latitude, 
+                ar.longitude, 
+                ar.accident_location as location, 
+                ar.vehicle_involved_id, 
+                vi.label AS "vehicle_label", 
+                vi.description AS "vehicle_description",
+                ar.patient_victim_id, 
+                pv.label AS victim_label, 
+                pv.description AS "victim_description",
+                ar.accident_type_id, 
+                at.label AS "accident_type_label", 
+                at.description AS "accident_type_description",
+                ar.user_id, 
+                u.username AS "reported_by",
+                ar.cause, 
+                ar.num_affecties, 
+                ar.age, 
+                ar.gender, 
+                ar.image_uri, 
+                ar.audio_uri, 
+                ar.status, 
+                ar.description, 
+                ar.created_at
+            FROM 
+                public.accident_reports ar
+            LEFT JOIN public.vehicle_involved vi ON ar.vehicle_involved_id = vi.id
+            LEFT JOIN public.patient_victim pv ON ar.patient_victim_id = pv.id
+            LEFT JOIN public.accident_types at ON ar.accident_type_id = at.id
+            LEFT JOIN public.users u ON ar.user_id = u.id
+            WHERE u.id = """ + userId + 
+            " ORDER BY ar.created_at DESC LIMIT "
+             + (" "+limit + " OFFSET " + offset);
     }
 
         // 🚀 Query Methods (to be placed in QueryStore)
@@ -255,15 +293,36 @@ public class Report {
         return query;
         }
 
-    public String getHeatMapData(String interval, Integer limit){
+    public String getHeatMapData(String interval){
         String query= "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity " +
         "FROM accident_reports " +
         "WHERE created_at >= NOW() - INTERVAL '" + interval + "' " +
-        "ORDER BY created_at DESC " + // Order by latest records first
+        "ORDER BY created_at DESC " ;
+        System.out.println(query);
+        return query;
+    }
+
+    public String getHeatMapDataRangeLimit(String interval,Integer limit){
+        String query= "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity " +
+        "FROM accident_reports " +
+        "WHERE created_at >= NOW() - INTERVAL '" + interval + "' " +
+        "ORDER BY created_at DESC " +
         "LIMIT " + limit; // Limit the number of records
         System.out.println(query);
         return query;
     }
 
+
+    public String getHeatMapDataWithLimit(Integer limit){
+        if(limit==null || limit<1){
+            limit=100; // Default limit
+        }
+        String query= "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity " +
+        "FROM accident_reports " +
+        "ORDER BY created_at DESC " + // Order by latest records first
+        "LIMIT " + limit; // Limit the number of records
+        System.out.println(query);
+        return query;
+    }
 
 }

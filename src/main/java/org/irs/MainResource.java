@@ -8,6 +8,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
@@ -121,10 +122,11 @@ public class MainResource {
     @GET
     @Path("/getJoinedReportByUserId/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<AccidentReportResponseDTO> getJoinedAccidentReportsByUserId(@PathParam("userId") String userId) {
-        return accidentReportService.getJoinedAccidentReportsByUserId(userId);
+    public Map<String, Object> getJoinedAccidentReportsByUserId(@PathParam("userId") String userId,@QueryParam("pageNumber") Integer pageNumber,@QueryParam("recordsPerPage") Integer recordsPerPage) {
+        return accidentReportService.getJoinedAccidentReportsByUserId(userId,pageNumber,recordsPerPage);
 
     }
+
 
     @GET
     @Path("getJoinedReportById/{reportId}")
@@ -134,10 +136,10 @@ public class MainResource {
     }
 
     @GET
-    @Path("heatmap/{range}")
+    @Path("heatmap")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<AccidentReportResponseDTO> getAccidentHeatmapData(@PathParam("range") String range) {
-        return accidentReportService.getAccidentHeatmapData(range);
+    public List<AccidentReportResponseDTO> getAccidentHeatmapData(@QueryParam("range") String range,@QueryParam("limit") Integer limit) {
+        return accidentReportService.getAccidentHeatmapData(range,limit);
     }
 
     @POST
@@ -310,11 +312,11 @@ public class MainResource {
     }
 
     @GET
-    @Path("/getClusteredAccidentsDBSCAN/{range}")
+    @Path("/getClusteredAccidentsDBSCAN")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getClusteredAccidentsDBSCAN(@PathParam("range") String range) {
+    public Response getClusteredAccidentsDBSCAN(@QueryParam("range") String range,@QueryParam("limit") Integer limit) {
         try {
-            List<Map<String, Object>> clusters = accidentReportService.getClusteredAccidentsDBSCAN(range);
+            List<Map<String, Object>> clusters = accidentReportService.getClusteredAccidentsDBSCAN(range,limit);
             return Response.ok(clusters).build();
         } catch (Exception e) {
             e.printStackTrace();
@@ -324,11 +326,11 @@ public class MainResource {
     }
 
     @GET
-    @Path("/getClusteredAccidents/{range}")
+    @Path("/getClusteredAccidents")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getClusteredAccidents(@PathParam("range") String range) {
+    public Response getClusteredAccidents(@QueryParam("range") String range,@QueryParam("limit") Integer limit) {
         try {
-            List<Cluster<DoublePoint>> clusters = accidentReportService.getClusteredAccidents(range);
+            List<Cluster<DoublePoint>> clusters = accidentReportService.getClusteredAccidents(range,limit);
             return Response.ok(clusters).build();
         } catch (Exception e) {
             e.printStackTrace();

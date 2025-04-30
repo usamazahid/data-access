@@ -188,10 +188,17 @@ public class AccidentReportService {
     }
 
 
-    public List<AccidentReportResponseDTO> getAccidentHeatmapData(String range) {
+    public List<AccidentReportResponseDTO> getAccidentHeatmapData(String range,Integer limit) {
+        String query =null;
         String interval = parseRangeToInterval(range);
-        String query = queryStore.getHeatMapData(interval,1000);
-    
+        if(range!=null && limit!=null){
+            query= queryStore.getHeatMapDataRangeLimit(interval, limit);
+        }else if(limit!=null){
+            query= queryStore.getHeatMapDataWithLimit(limit);
+        }else{
+            query= queryStore.getHeatMapData(interval);
+        }
+      
 
         List<AccidentReportResponseDTO> accidentData = new ArrayList<>();
     
@@ -214,6 +221,7 @@ public class AccidentReportService {
     
         return accidentData;
     }
+
 
     private String parseRangeToInterval(String range) {
         if (range != null && range.matches("^[0-9]+[dwm ysMh]$")) { // Added 's' for seconds and 'M' for months
@@ -330,16 +338,30 @@ public class AccidentReportService {
         System.out.println(responseDTO);
         return responseDTO;
     }
-
-    public List<AccidentReportResponseDTO> getJoinedAccidentReportsByUserId(String userId) {
-        String query = queryStore.getJoinedAccidentReportsByUserId(userId);
+    public Map<String, Object> getJoinedAccidentReportsByUserId(String userId, Integer pageNumber, Integer recordsPerPage) {
+        String query=null;
+        if(pageNumber!=null && recordsPerPage!=null){
+            int offset = (pageNumber - 1) * recordsPerPage;
+            int limit = recordsPerPage + 1; // Fetch one extra record to check for more data
+             query= queryStore.getJoinedAccidentReportsByUserIdWithPagination(userId, offset, limit);
+        }else{
+            query=queryStore.getJoinedAccidentReportsByUserId(userId);
+        }   
+       
+    
         List<AccidentReportResponseDTO> reports = new ArrayList<>();
+        boolean hasMoreData = false;
     
-        try (Connection con = datasource.getConnection(); 
-             Statement stmt = con.createStatement(); 
+        try (Connection con = datasource.getConnection();
+             Statement stmt = con.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
-    
             while (rs.next()) {
+                if(rs.isLast()){
+                    if(recordsPerPage!=null){
+                        hasMoreData = rs.getRow() > recordsPerPage; // Check if there are more records
+                        break;
+                    }
+                }
                 AccidentReportResponseDTO responseDTO = new AccidentReportResponseDTO();
                 responseDTO.id = String.valueOf(rs.getLong("report_id"));
                 responseDTO.latitude = rs.getDouble("latitude");
@@ -365,7 +387,7 @@ public class AccidentReportService {
                 responseDTO.status = rs.getString("status");
                 responseDTO.description = rs.getString("description");
                 responseDTO.createdAt = rs.getString("created_at");
-            
+    
                 reports.add(responseDTO);
             }
     
@@ -376,8 +398,7 @@ public class AccidentReportService {
                 responseDTO.rowsInserted = "0";
                 reports.add(responseDTO);
             }
-
-            System.out.println(reports);
+    
         } catch (Exception ex) {
             ex.printStackTrace();
             // Handle exception and add an error response
@@ -387,8 +408,14 @@ public class AccidentReportService {
             reports.add(responseDTO);
         }
     
-        return reports;
+        // Prepare the response with reports and hasMoreData flag
+        Map<String, Object> response = new HashMap<>();
+        response.put("reports", reports);
+        response.put("hasMoreData", hasMoreData);
+    
+        return response;
     }
+
     public String getFileBase64Response(String fileName){
         try {
             String filePath=ConstantValues.BASE_DIR+fileName;
@@ -434,63 +461,71 @@ public class AccidentReportService {
     }
     
  
-    public List<Map<String, Object>> getClusteredAccidentsDBSCAN(String range) {
-        List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range);
-
+    public List<Map<String, Object>> getClusteredAccidentsDBSCAN(String range, Integer limit) {
+        List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range, limit);
+    
         // Convert accidents to points
         List<DoublePoint> points = accidents.stream()
             .map(accident -> new DoublePoint(new double[]{accident.latitude, accident.longitude}))
             .collect(Collectors.toList());
-
+    
         // Apply DBSCAN clustering
         DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<>(0.01, 3); // Adjust epsilon and min points
         List<Cluster<DoublePoint>> clusters = clusterer.cluster(points);
-
+    
         // Prepare the response
         List<Map<String, Object>> response = new ArrayList<>();
         for (Cluster<DoublePoint> cluster : clusters) {
             Map<String, Object> clusterData = new HashMap<>();
-
+    
             // Calculate cluster center
             double sumLat = 0, sumLon = 0;
+            int totalSeverity = 0;
             List<Map<String, Object>> clusterPoints = new ArrayList<>();
             for (DoublePoint point : cluster.getPoints()) {
                 double latitude = point.getPoint()[0];
                 double longitude = point.getPoint()[1];
                 sumLat += latitude;
                 sumLon += longitude;
-
+    
                 // Find the original accident data
                 AccidentReportResponseDTO accident = accidents.stream()
                     .filter(a -> a.latitude == latitude && a.longitude == longitude)
                     .findFirst()
                     .orElse(null);
-
+    
                 if (accident != null) {
                     Map<String, Object> pointData = new HashMap<>();
                     pointData.put("id", accident.id);
                     pointData.put("latitude", accident.latitude);
                     pointData.put("longitude", accident.longitude);
                     pointData.put("severity", accident.severity);
+                    totalSeverity += accident.severity; // Sum up severity
                     clusterPoints.add(pointData);
                 }
             }
-
+    
             // Add cluster center and points
             clusterData.put("center", Map.of(
                 "latitude", sumLat / cluster.getPoints().size(),
                 "longitude", sumLon / cluster.getPoints().size()
             ));
             clusterData.put("points", clusterPoints);
-
+    
+            // Determine if the cluster is a black spot
+            boolean isBlackSpot = totalSeverity > 50 || clusterPoints.size() > 10; // Example thresholds
+            clusterData.put("isBlackSpot", isBlackSpot);
+    
             response.add(clusterData);
         }
-
+    
         return response;
     }
 
-    public List<Cluster<DoublePoint>> getClusteredAccidents(String range) {
-      List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range);
+     
+
+    public List<Cluster<DoublePoint>> getClusteredAccidents(String range,Integer limit) {
+      List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range,limit);
 
     // Convert accidents to points
     List<DoublePoint> points = accidents.stream()
@@ -501,6 +536,5 @@ public class AccidentReportService {
     DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<>(0.01, 3); // Adjust epsilon and min points
     return clusterer.cluster(points);
     }
-
 
 }
