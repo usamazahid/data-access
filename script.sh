@@ -67,6 +67,13 @@ else
   echo "Directory '$DEFAULT_DIRECTORY_FILES' already exists."
 fi
 
+# Stop and remove any container using port 8080
+EXISTING_PORT_CONTAINER=$(docker ps -q --filter "publish=8080")
+
+if [ ! -z "$EXISTING_PORT_CONTAINER" ]; then
+  echo "Stopping and removing the existing container using port 8080..."
+  docker stop $EXISTING_PORT_CONTAINER
+fi
 
 # Run the Docker container in detached mode, passing DB_IP as an environment variable
 echo "Running the Docker container in the background, exposing DB_IP..."
