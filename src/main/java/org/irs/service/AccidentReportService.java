@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -462,64 +463,103 @@ public class AccidentReportService {
     
  
     public List<Map<String, Object>> getClusteredAccidentsDBSCAN(String range, Integer limit) {
+        // 1. Fetch data with pagination
         List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range, limit);
+        System.out.println("Total records fetched: " + accidents.size());
     
-        // Convert accidents to points
-        List<DoublePoint> points = accidents.stream()
+        // 2. Early return if no data
+        if (accidents.isEmpty()) {
+            return Collections.emptyList();
+        }
+    
+        // 3. Convert accidents to points with parallel processing
+        List<DoublePoint> points = accidents.parallelStream()
             .map(accident -> new DoublePoint(new double[]{accident.latitude, accident.longitude}))
             .collect(Collectors.toList());
     
-        // Apply DBSCAN clustering
-        DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<>(0.01, 3); // Adjust epsilon and min points
+        // 4. Dynamic DBSCAN parameters based on data size
+        double epsilon = calculateEpsilon(accidents.size());
+        int minPoints = calculateMinPoints(accidents.size());
+        
+        DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<>(epsilon, minPoints);
         List<Cluster<DoublePoint>> clusters = clusterer.cluster(points);
+        System.out.println("Total clusters formed: " + clusters.size());
     
-        // Prepare the response
-        List<Map<String, Object>> response = new ArrayList<>();
-        for (Cluster<DoublePoint> cluster : clusters) {
-            Map<String, Object> clusterData = new HashMap<>();
-    
-            // Calculate cluster center
-            double sumLat = 0, sumLon = 0;
-            int totalSeverity = 0;
-            List<Map<String, Object>> clusterPoints = new ArrayList<>();
-            for (DoublePoint point : cluster.getPoints()) {
-                double latitude = point.getPoint()[0];
-                double longitude = point.getPoint()[1];
-                sumLat += latitude;
-                sumLon += longitude;
-    
-                // Find the original accident data
-                AccidentReportResponseDTO accident = accidents.stream()
-                    .filter(a -> a.latitude == latitude && a.longitude == longitude)
-                    .findFirst()
-                    .orElse(null);
-    
-                if (accident != null) {
+        // 5. Process clusters with parallel streams
+        return clusters.parallelStream()
+            .map(cluster -> {
+                Map<String, Object> clusterData = new HashMap<>();
+                
+                // Calculate cluster center and collect points
+                double sumLat = 0, sumLon = 0;
+                List<Map<String, Object>> clusterPoints = new ArrayList<>();
+                double totalSeverity = 0;
+                for (DoublePoint point : cluster.getPoints()) {
+                    double latitude = point.getPoint()[0];
+                    double longitude = point.getPoint()[1];
+                    sumLat += latitude;
+                    sumLon += longitude;
+                    
+                    // Find the original accident data
+                    AccidentReportResponseDTO accident = accidents.stream()
+                        .filter(a -> a.latitude == latitude && a.longitude == longitude)
+                        .findFirst()
+                        .orElse(null);
+                    
                     Map<String, Object> pointData = new HashMap<>();
-                    pointData.put("id", accident.id);
-                    pointData.put("latitude", accident.latitude);
-                    pointData.put("longitude", accident.longitude);
-                    pointData.put("severity", accident.severity);
-                    totalSeverity += accident.severity; // Sum up severity
+                    pointData.put("latitude", latitude);
+                    pointData.put("longitude", longitude);
+                    
+                    if (accident != null) {
+                        pointData.put("id", accident.id);
+                        pointData.put("severity", accident.severity);
+                        totalSeverity += accident.severity;
+                    }
+                    
                     clusterPoints.add(pointData);
                 }
-            }
     
-            // Add cluster center and points
-            clusterData.put("center", Map.of(
-                "latitude", sumLat / cluster.getPoints().size(),
-                "longitude", sumLon / cluster.getPoints().size()
-            ));
-            clusterData.put("points", clusterPoints);
+                // Add cluster center
+                clusterData.put("center", Map.of(
+                    "latitude", sumLat / cluster.getPoints().size(),
+                    "longitude", sumLon / cluster.getPoints().size()
+                ));
+                
+                // Add points and metadata
+                clusterData.put("points", clusterPoints);
+                clusterData.put("pointsLength", clusterPoints.size());
+                clusterData.put("totalSeverity", totalSeverity);
+                // Improved black spot detection
+                boolean isBlackSpot = isBlackSpot(clusterPoints.size(),totalSeverity);
+                clusterData.put("isBlackSpot", isBlackSpot);
+                
+                return clusterData;
+            })
+            .collect(Collectors.toList());
+    }
     
-            // Determine if the cluster is a black spot
-            boolean isBlackSpot = totalSeverity > 50 || clusterPoints.size() > 10; // Example thresholds
-            clusterData.put("isBlackSpot", isBlackSpot);
+    // Helper methods
+    private double calculateEpsilon(int dataSize) {
+        // Adjust epsilon based on data density
+        if (dataSize < 50) return 0.025;
+        if (dataSize < 200) return 0.02;
+        if (dataSize < 300) return 0.015;
+        return 0.01;
+    }
     
-            response.add(clusterData);
-        }
+    private int calculateMinPoints(int dataSize) {
+        // Adjust minPoints based on data density
+        if (dataSize < 50) return 2;
+        if (dataSize < 200) return 3;
+        if (dataSize < 300) return 4;
+        return 5;
+    }
     
-        return response;
+    private boolean isBlackSpot(int pointCount,double totalSeverity) {
+        // Consider both point density and severity
+        return pointCount > 5 || // High density
+               (pointCount > 2 && totalSeverity > 20) || // Medium density with high severity
+               totalSeverity > 30; // Very high severity
     }
 
      

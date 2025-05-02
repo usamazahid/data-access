@@ -303,6 +303,9 @@ public class Report {
     }
 
     public String getHeatMapDataRangeLimit(String interval,Integer limit){
+        if(limit==null || limit<1){
+            limit=100; // Default limit
+        }
         String query= "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity " +
         "FROM accident_reports " +
         "WHERE created_at >= NOW() - INTERVAL '" + interval + "' " +
