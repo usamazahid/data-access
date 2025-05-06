@@ -13,7 +13,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DoublePoint;
 import org.irs.dto.AccidentReportRequestDTO;
@@ -25,6 +24,7 @@ import org.irs.dto.FaultAssessmentDTO;
 import org.irs.dto.GeneralLovDto;
 import org.irs.dto.LovResponseDTO;
 import org.irs.dto.OrganizationsDTO;
+import org.irs.dto.RequestDto;
 import org.irs.dto.RoadSignageDTO;
 import org.irs.dto.RoadSurfaceConditionDTO;
 import org.irs.dto.RoadTypeDTO;
@@ -37,6 +37,7 @@ import org.irs.service.AccidentReportService;
 import org.irs.service.DispatchService;
 import org.irs.service.LovService;
 import org.irs.service.UserDetailService;
+
 
 @Path("/irs")
 public class MainResource {
@@ -138,8 +139,8 @@ public class MainResource {
     @GET
     @Path("heatmap")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<AccidentReportResponseDTO> getAccidentHeatmapData(@QueryParam("range") String range,@QueryParam("limit") Integer limit) {
-        return accidentReportService.getAccidentHeatmapData(range,limit);
+    public List<AccidentReportResponseDTO> getAccidentHeatmapData(RequestDto requestDto) {
+        return accidentReportService.getAccidentHeatmapData(requestDto);
     }
 
     @POST
@@ -314,9 +315,9 @@ public class MainResource {
     @GET
     @Path("/getClusteredAccidentsDBSCAN")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getClusteredAccidentsDBSCAN(@QueryParam("range") String range,@QueryParam("limit") Integer limit) {
+    public Response getClusteredAccidentsDBSCAN(RequestDto requestDto) {
         try {
-            List<Map<String, Object>> clusters = accidentReportService.getClusteredAccidentsDBSCAN(range,limit);
+            List<Map<String, Object>> clusters = accidentReportService.getClusteredAccidentsDBSCAN(requestDto);
             return Response.ok(clusters).build();
         } catch (Exception e) {
             e.printStackTrace();
@@ -328,9 +329,9 @@ public class MainResource {
     @GET
     @Path("/getClusteredAccidents")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getClusteredAccidents(@QueryParam("range") String range,@QueryParam("limit") Integer limit) {
+    public Response getClusteredAccidents(RequestDto requestDto) {
         try {
-            List<Cluster<DoublePoint>> clusters = accidentReportService.getClusteredAccidents(range,limit);
+            List<Cluster<DoublePoint>> clusters = accidentReportService.getClusteredAccidents(requestDto);
             return Response.ok(clusters).build();
         } catch (Exception e) {
             e.printStackTrace();

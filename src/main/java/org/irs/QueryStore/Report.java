@@ -328,4 +328,82 @@ public class Report {
         return query;
     }
 
+
+    public String getFilteredHeatMapDataWithLimit(Integer limit, String vehicleType, String accidentType) {
+        StringBuilder query = new StringBuilder();
+        query.append("SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity ")
+             .append("FROM accident_reports ar ");
+        
+        // Add joins if filters are present
+        if (vehicleType != null) {
+            query.append("LEFT JOIN vehicle_involved vi ON ar.vehicle_involved_id = vi.id ");
+        }
+        if (accidentType != null) {
+            query.append("LEFT JOIN accident_types at ON ar.accident_type_id = at.id ");
+        }
+        
+        query.append("WHERE 1=1 ");
+        
+        // Add filter conditions
+        if (vehicleType != null) {
+            query.append("AND vi.id = '").append(vehicleType).append("' ");
+        }
+        if (accidentType != null) {
+            query.append("AND at.id = '").append(accidentType).append("' ");
+        }
+        
+        query.append("ORDER BY ar.created_at DESC ");
+        
+        // Add limit
+        if (limit == null || limit < 1) {
+            limit = 100;
+        }
+        query.append("LIMIT ").append(limit);
+        
+        System.out.println("Filtered Query: " + query.toString());
+        return query.toString();
+    }
+
+    public String getFilteredHeatMapData(String interval, Integer limit, String vehicleType, String accidentType) {
+        StringBuilder query = new StringBuilder();
+        query.append("SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity ")
+             .append("FROM accident_reports ar ");
+        
+        // Add joins if filters are present
+        
+        if (vehicleType != null) {
+            query.append("LEFT JOIN vehicle_involved vi ON ar.vehicle_involved_id = vi.id ");
+        }
+        if (accidentType != null) {
+            query.append("LEFT JOIN accident_types at ON ar.accident_type_id = at.id ");
+        }
+    
+        
+        query.append("WHERE 1=1 ");
+        
+        // Add time range if specified
+        if (interval != null) {
+            query.append("AND ar.created_at >= NOW() - INTERVAL '").append(interval).append("' ");
+        }
+        
+        // Add filter conditions
+        if (vehicleType != null) {
+            query.append("AND vi.id = '").append(vehicleType).append("' ");
+        }
+        if (accidentType != null) {
+            query.append("AND at.id = '").append(accidentType).append("' ");
+        }
+        
+        query.append("ORDER BY ar.created_at DESC ");
+        
+        // Add limit
+        if (limit == null || limit < 1) {
+            limit = 100;
+        }
+        query.append("LIMIT ").append(limit);
+        
+        System.out.println("Filtered Clustering Query: " + query.toString());
+        return query.toString();
+    }
+
 }

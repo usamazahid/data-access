@@ -24,6 +24,7 @@ import org.irs.dto.AccidentReportResponseDTO;
 import org.irs.dto.DriverDTO;
 import org.irs.dto.ImageDTO;
 import org.irs.dto.PassengerDTO;
+import org.irs.dto.RequestDto;
 import org.irs.dto.VehicleDTO;
 import org.irs.dto.VehicleFitnessDTO;
 import org.irs.dto.WitnessDTO;
@@ -189,13 +190,21 @@ public class AccidentReportService {
     }
 
 
-    public List<AccidentReportResponseDTO> getAccidentHeatmapData(String range,Integer limit) {
+    public List<AccidentReportResponseDTO> getAccidentHeatmapData(RequestDto requestDto) {
         String query =null;
-        String interval = parseRangeToInterval(range);
-        if(range!=null && limit!=null){
-            query= queryStore.getHeatMapDataRangeLimit(interval, limit);
-        }else if(limit!=null){
-            query= queryStore.getHeatMapDataWithLimit(limit);
+        String interval = parseRangeToInterval(requestDto.range);
+        if (requestDto.vehicleType != null || requestDto.accidentType != null) {
+            if(requestDto.range!=null){
+                query = queryStore.getFilteredHeatMapData(interval,requestDto.limit, requestDto.vehicleType, requestDto.accidentType);
+            }else{
+                query = queryStore.getFilteredHeatMapDataWithLimit(requestDto.limit, requestDto.vehicleType, requestDto.accidentType);
+            }
+            
+        }
+        else if(requestDto.range!=null && requestDto.limit!=null){
+            query= queryStore.getHeatMapDataRangeLimit(interval, requestDto.limit);
+        }else if(requestDto.limit!=null){
+            query= queryStore.getHeatMapDataWithLimit(requestDto.limit);
         }else{
             query= queryStore.getHeatMapData(interval);
         }
@@ -462,9 +471,9 @@ public class AccidentReportService {
     }
     
  
-    public List<Map<String, Object>> getClusteredAccidentsDBSCAN(String range, Integer limit) {
+    public List<Map<String, Object>> getClusteredAccidentsDBSCAN(RequestDto requestDto) {
         // 1. Fetch data with pagination
-        List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range, limit);
+        List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(requestDto);
         System.out.println("Total records fetched: " + accidents.size());
     
         // 2. Early return if no data
@@ -564,8 +573,8 @@ public class AccidentReportService {
 
      
 
-    public List<Cluster<DoublePoint>> getClusteredAccidents(String range,Integer limit) {
-      List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(range,limit);
+    public List<Cluster<DoublePoint>> getClusteredAccidents(RequestDto requestDto) {
+      List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(requestDto);
 
     // Convert accidents to points
     List<DoublePoint> points = accidents.stream()
