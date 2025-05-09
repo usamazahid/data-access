@@ -18,6 +18,26 @@ public class RequestDto {
     public String vehicleType;
     @QueryParam("accidentType")
     public String accidentType;
+    @QueryParam("startDate")
+    public String startDate;
+    @QueryParam("endDate")
+    public String endDate;
+    @QueryParam("severity")
+    public String severity;
+    @QueryParam("swLat")
+    public Double swLat;
+    
+    @QueryParam("swLng")
+    public Double swLng;
+
+
+
+    @QueryParam("neLat")
+    public Double neLat;
+
+    @QueryParam("neLng")
+    public Double neLng;
+
     @Override
     public String toString() {
         return "RequestDto [range=" + range + ", limit=" + limit + ", pageNumber=" + pageNumber + ", recordsPerPage="

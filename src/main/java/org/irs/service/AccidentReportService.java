@@ -193,12 +193,21 @@ public class AccidentReportService {
     public List<AccidentReportResponseDTO> getAccidentHeatmapData(RequestDto requestDto) {
         String query =null;
         String interval = parseRangeToInterval(requestDto.range);
-        if (requestDto.vehicleType != null || requestDto.accidentType != null) {
-            if(requestDto.range!=null){
-                query = queryStore.getFilteredHeatMapData(interval,requestDto.limit, requestDto.vehicleType, requestDto.accidentType);
-            }else{
-                query = queryStore.getFilteredHeatMapDataWithLimit(requestDto.limit, requestDto.vehicleType, requestDto.accidentType);
-            }
+        if (requestDto.vehicleType != null || requestDto.accidentType != null || requestDto.startDate!=null || requestDto.endDate!=null
+        || requestDto.severity!=null || (requestDto.swLat!=null && requestDto.swLng!=null && requestDto.neLat!=null && requestDto.neLng!=null)) {
+                query = queryStore.getFilteredHeatMapDataWithLimit(
+                    interval,
+                    requestDto.limit,
+                    requestDto.vehicleType,
+                    requestDto.accidentType,
+                    requestDto.startDate,
+                    requestDto.endDate,
+                    requestDto.severity,
+                    requestDto.swLat,
+                    requestDto.swLng,
+                    requestDto.neLat,
+                    requestDto.neLng
+                );
             
         }
         else if(requestDto.range!=null && requestDto.limit!=null){

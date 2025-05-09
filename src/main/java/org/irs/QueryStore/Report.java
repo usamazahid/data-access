@@ -406,4 +406,83 @@ public class Report {
         return query.toString();
     }
 
+
+    public String getFilteredHeatMapDataWithLimit(
+        String interval,
+        Integer limit,
+        String vehicleType,
+        String accidentType,
+        String startDate,      // new
+        String endDate,        // new
+        String minSeverity,   // new
+        Double swLat,          // new
+        Double swLng,          // new
+        Double neLat,          // new
+        Double neLng           // new
+    ) {
+        StringBuilder q = new StringBuilder();
+        q.append("SELECT report_id, ST_X(gis_coordinates) AS longitude, ")
+        .append("ST_Y(gis_coordinates) AS latitude, severity ")
+        .append("FROM accident_reports ar ");
+
+        if (vehicleType != null) {
+            q.append("LEFT JOIN vehicle_involved vi ON ar.vehicle_involved_id = vi.id ");
+        }
+        if (accidentType != null) {
+            q.append("LEFT JOIN accident_types at ON ar.accident_type_id = at.id ");
+        }
+
+        q.append("WHERE 1=1 ");
+
+        if (interval != null) {
+            q.append("AND ar.created_at >= NOW() - INTERVAL '").append(interval).append("' ");
+        }
+
+        if (vehicleType != null) {
+            q.append("AND vi.id = '").append(vehicleType).append("' ");
+        }
+        if (accidentType != null) {
+            q.append("AND at.id = '").append(accidentType).append("' ");
+        }
+        if (startDate != null) {
+            q.append("AND ar.created_at >= '").append(startDate).append("' ");
+        }
+        if (endDate != null) {
+            q.append("AND ar.created_at <= '").append(endDate).append("' ");
+        }
+        if (minSeverity != null) {
+            if(minSeverity.matches("[0-9]+")) {
+                q.append("AND ar.severity >= ").append(minSeverity).append(" ");
+            }
+            else if(minSeverity.matches("[a-zA-Z]+")) {
+                switch (minSeverity) {
+                    case "low":
+                        q.append("AND ar.severity BETWEEN 1 AND 3 ");
+                        break;
+                    case "medium":
+                        q.append("AND ar.severity BETWEEN 4 AND 6 ");
+                        break;
+                    case "high":
+                        q.append("AND ar.severity BETWEEN 7 AND 10 ");
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Invalid severity level: " + minSeverity);
+                }
+            }
+        }
+        if (swLat!=null && swLng!=null && neLat!=null && neLng!=null) {
+            q.append("AND ST_Y(gis_coordinates) BETWEEN ")
+            .append(swLat).append(" AND ").append(neLat).append(" ")
+            .append("AND ST_X(gis_coordinates) BETWEEN ")
+            .append(swLng).append(" AND ").append(neLng).append(" ");
+        }
+
+        if (limit == null || limit < 1) limit = 100;
+        q.append("ORDER BY ar.created_at DESC ")
+        .append("LIMIT ").append(limit);
+
+        System.out.println("Filtered Query: " + q);
+        return q.toString();
+    }
+
 }
