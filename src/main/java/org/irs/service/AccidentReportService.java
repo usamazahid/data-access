@@ -195,6 +195,9 @@ public class AccidentReportService {
         String interval = parseRangeToInterval(requestDto.range);
         if (requestDto.vehicleType != null || requestDto.accidentType != null || requestDto.startDate!=null || requestDto.endDate!=null
         || requestDto.severity!=null || (requestDto.swLat!=null && requestDto.swLng!=null && requestDto.neLat!=null && requestDto.neLng!=null)) {
+                if(requestDto.range==null){
+                    interval=null;
+                }
                 query = queryStore.getFilteredHeatMapDataWithLimit(
                     interval,
                     requestDto.limit,

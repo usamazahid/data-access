@@ -436,6 +436,13 @@ public class Report {
 
         if (interval != null) {
             q.append("AND ar.created_at >= NOW() - INTERVAL '").append(interval).append("' ");
+        }else{
+            if (startDate != null) {
+                q.append("AND ar.created_at >= '").append(startDate).append("' ");
+            }
+            if (endDate != null) {
+                q.append("AND ar.created_at <= '").append(endDate).append("' ");
+            }
         }
 
         if (vehicleType != null) {
@@ -444,12 +451,7 @@ public class Report {
         if (accidentType != null) {
             q.append("AND at.id = '").append(accidentType).append("' ");
         }
-        if (startDate != null) {
-            q.append("AND ar.created_at >= '").append(startDate).append("' ");
-        }
-        if (endDate != null) {
-            q.append("AND ar.created_at <= '").append(endDate).append("' ");
-        }
+       
         if (minSeverity != null) {
             if(minSeverity.matches("[0-9]+")) {
                 q.append("AND ar.severity >= ").append(minSeverity).append(" ");
