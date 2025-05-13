@@ -6,8 +6,8 @@ public class VehicleDTO {
     public Integer type;
     public String condition;
     public String fitnessCertificateStatus;
-    public String roadTaxStatus;
-    public String insuranceStatus;
+    public Integer roadTaxStatus;
+    public Integer insuranceStatus;
     public String getRegistrationNo() {
         return registrationNo;
     }
@@ -32,16 +32,17 @@ public class VehicleDTO {
     public void setFitnessCertificateStatus(String fitnessCertificateStatus) {
         this.fitnessCertificateStatus = fitnessCertificateStatus;
     }
-    public String getRoadTaxStatus() {
+    public Integer getRoadTaxStatus() {
         return roadTaxStatus;
     }
-    public void setRoadTaxStatus(String roadTaxStatus) {
+    public void setRoadTaxStatus(Integer roadTaxStatus) {
         this.roadTaxStatus = roadTaxStatus;
     }
-    public String getInsuranceStatus() {
+    public Integer getInsuranceStatus() {
         return insuranceStatus;
     }
-    public void setInsuranceStatus(String insuranceStatus) {
+    public void setInsuranceStatus(Integer insuranceStatus) {
         this.insuranceStatus = insuranceStatus;
     }
+ 
 }

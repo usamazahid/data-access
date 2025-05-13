@@ -109,9 +109,12 @@ CREATE TABLE IF NOT EXISTS vehicle_details  (
     type int4 NULL,
     condition VARCHAR(50),
     fitness_certificate_status VARCHAR(50),
-    road_tax_status VARCHAR(50),
-    insurance_status VARCHAR(50),
-    CONSTRAINT fk_vehicle_details_vechile_type_id FOREIGN KEY (type) REFERENCES public.vehicle_involved(id) ON DELETE CASCADE
+    road_tax_status int4 NULL,
+    insurance_status int4 NULL,
+    CONSTRAINT fk_vehicle_details_vechile_type_id FOREIGN KEY (type) REFERENCES public.vehicle_involved(id) ON DELETE CASCADE,
+    CONSTRAINT fk_vehicle_details_insurance_status FOREIGN KEY (insurance_status) REFERENCES public.insurance_status(id) ON DELETE CASCADE,
+    CONSTRAINT fk_vehicle_details_road_tax_status FOREIGN KEY (road_tax_status) REFERENCES public.road_tax_status(id) ON DELETE CASCADE
+
 );
 
 --drop table driver_details ;
@@ -132,10 +135,12 @@ CREATE TABLE IF NOT EXISTS driver_details (
 CREATE TABLE IF NOT EXISTS passenger_casualties (
     id SERIAL PRIMARY KEY,
     report_id INT REFERENCES accident_reports(report_id) ON DELETE CASCADE,
-    type VARCHAR(50),
+    type int4 NULL,
     name VARCHAR(255),
     hospital_name VARCHAR(255),
-    injury_severity VARCHAR(50)
+    injury_severity int4 NULL,
+    CONSTRAINT fk_passenger_casualties_injury_severity FOREIGN KEY (injury_severity) REFERENCES injury_severity(id),
+    CONSTRAINT fk_passenger_casualties_causalities_status FOREIGN KEY (type) REFERENCES causalities_status(id)
 );
 
 --drop table evidence_collection;
@@ -184,11 +189,13 @@ CREATE TABLE public.accident_vehicle_fitness (
     vehicle_no VARCHAR(50) NOT NULL,
     fitness_certificate_valid BOOLEAN NOT NULL,
     expiry_date DATE,
-    road_tax_status VARCHAR(50),
-    insurance_status VARCHAR(50),
+    road_tax_status int4 NULL,
+    insurance_status int4 NULL,
 
     -- Foreign Key linking to accident_reports
-    CONSTRAINT accident_vehicle_fitness_report_id_fkey FOREIGN KEY (report_id) 
-    REFERENCES public.accident_reports(report_id) ON DELETE CASCADE
+    CONSTRAINT accident_vehicle_fitness_report_id_fkey FOREIGN KEY (report_id) REFERENCES public.accident_reports(report_id) ON DELETE CASCADE,
+    CONSTRAINT fk_accident_vehicle_fitness_road_tax_status FOREIGN KEY (road_tax_status) REFERENCES road_tax_status(id),
+    CONSTRAINT fk_accident_vehicle_fitness_insurance_status FOREIGN KEY (insurance_status) REFERENCES public.insurance_status(id) ON DELETE CASCADE
+
 );
 

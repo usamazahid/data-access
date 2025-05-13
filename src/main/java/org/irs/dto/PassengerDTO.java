@@ -2,14 +2,14 @@ package org.irs.dto;
 
 
 public class PassengerDTO {
-    public String type;
+    public Integer type;
     public String name;
     public String hospitalName;
-    public String injurySeverity;
-    public String getType() {
+    public Integer injurySeverity;
+    public Integer getType() {
         return type;
     }
-    public void setType(String type) {
+    public void setType(Integer type) {
         this.type = type;
     }
     public String getName() {
@@ -24,10 +24,16 @@ public class PassengerDTO {
     public void setHospitalName(String hospitalName) {
         this.hospitalName = hospitalName;
     }
-    public String getInjurySeverity() {
+    public Integer getInjurySeverity() {
         return injurySeverity;
     }
-    public void setInjurySeverity(String injurySeverity) {
+    public void setInjurySeverity(Integer injurySeverity) {
         this.injurySeverity = injurySeverity;
     }
+    @Override
+    public String toString() {
+        return "PassengerDTO [type=" + type + ", name=" + name + ", hospitalName=" + hospitalName + ", injurySeverity="
+                + injurySeverity + "]";
+    }
+
 }

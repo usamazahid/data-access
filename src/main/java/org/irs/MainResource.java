@@ -17,9 +17,11 @@ import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DoublePoint;
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
+import org.irs.dto.AccidentStatisticsDTO;
 import org.irs.dto.ApparentCauseDTO;
 import org.irs.dto.CaseReferredToDTO;
 import org.irs.dto.DispatchRequestDto;
+import org.irs.dto.ErrorResponse;
 import org.irs.dto.FaultAssessmentDTO;
 import org.irs.dto.GeneralLovDto;
 import org.irs.dto.LovResponseDTO;
@@ -28,6 +30,7 @@ import org.irs.dto.RequestDto;
 import org.irs.dto.RoadSignageDTO;
 import org.irs.dto.RoadSurfaceConditionDTO;
 import org.irs.dto.RoadTypeDTO;
+import org.irs.dto.StatisticsRequestDTO;
 import org.irs.dto.UserRequestDTO;
 import org.irs.dto.UserResponseDTO;
 import org.irs.dto.UserRolesDTO;
@@ -337,6 +340,20 @@ public class MainResource {
             e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error fetching clustered accidents")
                     .build();
+        }
+    }
+
+    @POST
+    @Path("/statistics/overview")
+    public Response getStatistics(StatisticsRequestDTO request) {
+        try {
+            if(request==null){request=new StatisticsRequestDTO();}
+            AccidentStatisticsDTO statistics = accidentReportService.getAccidentStatistics(request);
+            return Response.ok(statistics).build();
+        } catch (Exception e) {
+            return Response.serverError()
+                         .entity(new ErrorResponse("Error fetching statistics: " + e.getMessage()))
+                         .build();
         }
     }
 

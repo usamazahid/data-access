@@ -21,10 +21,12 @@ import org.irs.QueryStore.Report;
 import org.irs.database.Datasources;
 import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
+import org.irs.dto.AccidentStatisticsDTO;
 import org.irs.dto.DriverDTO;
 import org.irs.dto.ImageDTO;
 import org.irs.dto.PassengerDTO;
 import org.irs.dto.RequestDto;
+import org.irs.dto.StatisticsRequestDTO;
 import org.irs.dto.VehicleDTO;
 import org.irs.dto.VehicleFitnessDTO;
 import org.irs.dto.WitnessDTO;
@@ -598,4 +600,67 @@ public class AccidentReportService {
     return clusterer.cluster(points);
     }
 
+    public AccidentStatisticsDTO getAccidentStatistics(StatisticsRequestDTO request) {
+        AccidentStatisticsDTO statistics = new AccidentStatisticsDTO();
+        
+        try (Connection con = datasource.getConnection(); 
+             Statement stmt = con.createStatement()) {
+            
+            // Get accident type distribution
+            String accidentTypeQuery = queryStore.getAccidentTypeDistribution(
+                request.startDate, request.endDate, request.range);
+            try (ResultSet rs = stmt.executeQuery(accidentTypeQuery)) {
+                List<AccidentStatisticsDTO.ChartDataPoint> accidentTypes = new ArrayList<>();
+                while (rs.next()) {
+                    AccidentStatisticsDTO.ChartDataPoint point = new AccidentStatisticsDTO.ChartDataPoint();
+                    point.label = rs.getString("type_label");
+                    point.count = rs.getInt("count");
+                    point.avgSeverity = rs.getDouble("avg_severity");
+                    accidentTypes.add(point);
+                }
+                statistics.accidentTypeDistribution = accidentTypes;
+            }
+            
+            // Get vehicle type distribution
+            String vehicleTypeQuery = queryStore.getVehicleTypeDistribution(
+                request.startDate, request.endDate, request.range);
+            try (ResultSet rs = stmt.executeQuery(vehicleTypeQuery)) {
+                List<AccidentStatisticsDTO.ChartDataPoint> vehicleTypes = new ArrayList<>();
+                while (rs.next()) {
+                    AccidentStatisticsDTO.ChartDataPoint point = new AccidentStatisticsDTO.ChartDataPoint();
+                    point.label = rs.getString("type_label");
+                    point.count = rs.getInt("count");
+                    point.avgSeverity = rs.getDouble("avg_severity");
+                    vehicleTypes.add(point);
+                }
+                statistics.vehicleTypeDistribution = vehicleTypes;
+            }
+            
+            // Get time-based trends
+            String trendsQuery = queryStore.getAccidentTrends(
+                request.interval != null ? request.interval : "month",
+                request.startDate, request.endDate, request.range);
+            System.out.println(trendsQuery);
+            try (ResultSet rs = stmt.executeQuery(trendsQuery)) {
+                List<AccidentStatisticsDTO.TimeSeriesDataPoint> trends = new ArrayList<>();
+                while (rs.next()) {
+                    AccidentStatisticsDTO.TimeSeriesDataPoint point = new AccidentStatisticsDTO.TimeSeriesDataPoint();
+                    point.timePeriod = rs.getString("time_period");
+                    point.totalCount = rs.getInt("total_count");
+                    point.fatalCount = rs.getInt("fatal_count");
+                    point.avgSeverity = rs.getDouble("avg_severity");
+                    point.weatherRelatedCount = rs.getInt("weather_related_count");
+                    point.roadConditionRelatedCount = rs.getInt("road_condition_related_count");
+                    trends.add(point);
+                }
+                statistics.trends = trends;
+            }
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("Error fetching accident statistics: " + ex.getMessage());
+        }
+        
+        return statistics;
+    }
 }

@@ -14,6 +14,7 @@ import org.irs.dto.WitnessDTO;
 
 
 
+
 @Singleton
 public class Report {
     public String getInsertAccidentReportQuery(AccidentReportRequestDTO reportDTO) {
@@ -236,11 +237,17 @@ public class Report {
         // 🚀 Query Methods (to be placed in QueryStore)
 
     public String getInsertVehicleQuery(VehicleDTO vehicle, Long reportId) {
-        String query= "INSERT INTO vehicle_details (report_id, registration_no, type, condition, fitness_certificate_status, road_tax_status, insurance_status) VALUES ("
-                + reportId + ", '" + vehicle.getRegistrationNo() + "', " + (vehicle.getType()!=null?vehicle.getType():"NULL") + ", '" + vehicle.getCondition() + "', '" + vehicle.getFitnessCertificateStatus() + "', '" + vehicle.getRoadTaxStatus() + "', '" + vehicle.getInsuranceStatus() + "');";
+        String query = "INSERT INTO vehicle_details (report_id, registration_no, type, condition, fitness_certificate_status, road_tax_status, insurance_status) VALUES ("
+                + reportId + ", "
+                + "'" + vehicle.getRegistrationNo() + "', "
+                + (vehicle.getType() != null ? vehicle.getType() : "NULL") + ", "
+                + "'" + vehicle.getCondition() + "', "
+                + "'" + vehicle.getFitnessCertificateStatus() + "', "
+                + vehicle.getRoadTaxStatus() + ", "  // Now expects int4 foreign key
+                + vehicle.getInsuranceStatus() + ")"; // Now expects int4 foreign key
         System.out.println(query);
         return query;
-        }
+    }
 
     public String getInsertDriverQuery(DriverDTO driver, Long reportId) {
         String query= "INSERT INTO driver_details (report_id, name, cnic_no, license_no, contact_no) VALUES ("
@@ -251,12 +258,16 @@ public class Report {
         }
 
     public String getInsertPassengerQuery(PassengerDTO passenger, Long reportId) {
-        String query= "INSERT INTO passenger_casualties (report_id, type, name, hospital_name, injury_severity) VALUES ("
-                + reportId + ", '" + passenger.getType() + "', '" + passenger.getName() + "', '" + passenger.getHospitalName() + "', '" + passenger.getInjurySeverity() + "');";
+        String query = "INSERT INTO passenger_casualties (report_id, type, name, hospital_name, injury_severity) VALUES ("
+                + reportId + ", "
+                + passenger.getType() + ", " // Now expects int4 foreign key to causalities_status
+                + "'" + passenger.getName() + "', "
+                + "'" + passenger.getHospitalName() + "', "
+                + passenger.getInjurySeverity() + ")"; // Now expects int4 foreign key to injury_severity
     
         System.out.println(query);
         return query;    
-        }
+    }
 
     public String getInsertWitnessQuery(WitnessDTO witness, Long reportId) {
         String query= "INSERT INTO witness_details (report_id, name, contact_no, address) VALUES ("
@@ -287,11 +298,15 @@ public class Report {
     }
 
     public String getInsertVehicleFitnessQuery(VehicleFitnessDTO fitness, Long reportId) {
-        String query= "INSERT INTO public.accident_vehicle_fitness (report_id, vehicle_no, fitness_certificate_valid, expiry_date, road_tax_status, insurance_status) VALUES (" +
-                reportId + ", '" + fitness.getVehicleNo() + "', " + fitness.isFitnessCertificateValid() + ", '" + fitness.getExpiryDate() + "', '" + fitness.getRoadTaxStatus() + "', '" + fitness.getInsuranceStatus() + "');";
+        String query = "INSERT INTO public.accident_vehicle_fitness (report_id, vehicle_no, fitness_certificate_valid, expiry_date, road_tax_status, insurance_status) VALUES (" +
+                reportId + ", '" + fitness.getVehicleNo() + "', " + 
+                fitness.isFitnessCertificateValid() + ", " + 
+                (fitness.getExpiryDate() != null ? "'" + fitness.getExpiryDate() + "'" : "NULL") + ", " +
+                fitness.getRoadTaxStatus() + ", " +  // Now expects int4 foreign key
+                fitness.getInsuranceStatus() + ")";  // Now expects int4 foreign key
         System.out.println(query);
         return query;
-        }
+    }
 
     public String getHeatMapData(String interval){
         String query= "SELECT report_id, ST_X(gis_coordinates) AS longitude, ST_Y(gis_coordinates) AS latitude, severity " +
@@ -487,4 +502,74 @@ public class Report {
         return q.toString();
     }
 
+    private void appendDateFilters(StringBuilder query, String startDate, String endDate, String range) {
+        if (range != null) {
+            query.append(" AND created_at >= NOW() - INTERVAL '").append(range).append("'");
+        } else {
+            if (startDate != null) {
+                query.append(" AND created_at >= '").append(startDate).append("'");
+            }
+            if (endDate != null) {
+                query.append(" AND created_at <= '").append(endDate).append("'");
+            }
+        }
+    }
+
+    public String getAccidentTypeDistribution(String startDate, String endDate, String range) {
+        StringBuilder query = new StringBuilder();
+        query.append("SELECT at.label as type_label, COUNT(*) as count, AVG(ar.severity) as avg_severity ")
+             .append("FROM accident_reports ar ")
+             .append("JOIN accident_types at ON ar.accident_type_id = at.id ")
+             .append("WHERE 1=1 ");
+        
+        appendDateFilters(query, startDate, endDate, range);
+        query.append(" GROUP BY at.id, at.label ORDER BY count DESC");
+        
+        return query.toString();
+    }
+
+    public String getVehicleTypeDistribution(String startDate, String endDate, String range) {
+        StringBuilder query = new StringBuilder();
+        query.append("SELECT vi.label as type_label, COUNT(*) as count, AVG(ar.severity) as avg_severity ")
+             .append("FROM accident_reports ar ")
+             .append("JOIN vehicle_involved vi ON ar.vehicle_involved_id = vi.id ")
+             .append("WHERE 1=1 ");
+        
+        appendDateFilters(query, startDate, endDate, range);
+        query.append(" GROUP BY vi.id, vi.label ORDER BY count DESC");
+        
+        return query.toString();
+    }
+
+    public String getAccidentTrends(String interval,
+                                String startDate,
+                                String endDate,
+                                String range) {
+    StringBuilder query = new StringBuilder();
+    query.append("SELECT ")
+         .append("  DATE_TRUNC('").append(interval).append("', ar.created_at) AS time_period, ")
+         .append("  COUNT(DISTINCT ar.report_id) AS total_count, ")
+         .append("  COUNT(DISTINCT CASE ")
+         .append("    WHEN pc.injury_severity IS NOT NULL ")
+         .append("         AND ins.label = 'Fatal' ")
+         .append("    THEN ar.report_id END")
+         .append(") AS fatal_count, ")
+         .append("  ROUND(AVG(ar.severity)::numeric, 2) AS avg_severity, ")
+         .append("  COUNT(DISTINCT CASE WHEN wc.condition <> 'Clear' THEN ar.report_id END) AS weather_related_count, ")
+         .append("  COUNT(DISTINCT CASE WHEN rs.condition <> 'Dry'   THEN ar.report_id END) AS road_condition_related_count ")
+         .append("FROM accident_reports ar ")
+         .append("LEFT JOIN passenger_casualties pc ON ar.report_id = pc.report_id ")
+         // changed alias from "is" to "ins" here ↓
+         .append("LEFT JOIN injury_severity ins ON pc.injury_severity = ins.id ")
+         .append("LEFT JOIN weather_condition wc    ON ar.weather_condition      = wc.id ")
+         .append("LEFT JOIN road_surface_condition rs ON ar.road_surface_condition = rs.id ")
+         .append("WHERE 1=1 ");
+
+    appendDateFilters(query, startDate, endDate, range);
+
+    query.append(" GROUP BY DATE_TRUNC('").append(interval).append("', ar.created_at) ")
+         .append(" ORDER BY time_period;");
+
+    return query.toString();
+}
 }
