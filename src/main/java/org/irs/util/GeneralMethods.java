@@ -1,16 +1,16 @@
 package org.irs.util;
+import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.io.File;
-import java.io.FileInputStream; 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.quarkus.logging.Log;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
 public class GeneralMethods {
@@ -70,7 +70,24 @@ public class GeneralMethods {
             throw new NotFoundException("File not found");
         }
     }
+    public String parseRangeToInterval(String range) {
+        if (range != null && range.matches("^[0-9]+[dwm ysMh]$")) { // Added 's' for seconds and 'M' for months
+            char unit = range.charAt(range.length() - 1);
+            String value = range.substring(0, range.length() - 1);
 
+            switch (unit) {
+                case 'd': return value + " days";
+                case 'w': return value + " weeks";
+                case 'm': return value + " minutes";
+                case 'M': return value + " months"; // Added case for months
+                case 's': return value + " seconds"; // Added case for seconds
+                case 'y': return value + " years";
+                case 'h': return value + " years";
+                default:  return "1 month"; // Default fallback
+            }
+        }
+        return "1 month"; // Default fallback
+    }
 
      
 }

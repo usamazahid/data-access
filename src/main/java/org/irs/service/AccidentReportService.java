@@ -194,7 +194,7 @@ public class AccidentReportService {
 
     public List<AccidentReportResponseDTO> getAccidentHeatmapData(RequestDto requestDto) {
         String query =null;
-        String interval = parseRangeToInterval(requestDto.range);
+        String interval =generalMethods.parseRangeToInterval(requestDto.range);
         if (requestDto.vehicleType != null || requestDto.accidentType != null || requestDto.startDate!=null || requestDto.endDate!=null
         || requestDto.severity!=null || (requestDto.swLat!=null && requestDto.swLng!=null && requestDto.neLat!=null && requestDto.neLng!=null)) {
                 if(requestDto.range==null){
@@ -247,24 +247,7 @@ public class AccidentReportService {
     }
 
 
-    private String parseRangeToInterval(String range) {
-        if (range != null && range.matches("^[0-9]+[dwm ysMh]$")) { // Added 's' for seconds and 'M' for months
-            char unit = range.charAt(range.length() - 1);
-            String value = range.substring(0, range.length() - 1);
-
-            switch (unit) {
-                case 'd': return value + " days";
-                case 'w': return value + " weeks";
-                case 'm': return value + " minutes";
-                case 'M': return value + " months"; // Added case for months
-                case 's': return value + " seconds"; // Added case for seconds
-                case 'y': return value + " years";
-                case 'h': return value + " years";
-                default:  return "1 month"; // Default fallback
-            }
-        }
-        return "1 month"; // Default fallback
-    }
+   
 
     public List<AccidentReportResponseDTO> getAccidentReportsByUserId(String userId) {
         String query = queryStore.getSelectByUserId(userId);
@@ -605,7 +588,9 @@ public class AccidentReportService {
         
         try (Connection con = datasource.getConnection(); 
              Statement stmt = con.createStatement()) {
-            
+            if(request.range!=null){
+                request.range=generalMethods.parseRangeToInterval(request.range);
+            }
             // Get accident type distribution
             String accidentTypeQuery = queryStore.getAccidentTypeDistribution(
                 request.startDate, request.endDate, request.range);
