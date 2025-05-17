@@ -10,7 +10,7 @@ import org.irs.dto.AskRequestDTO;
 import org.irs.dto.JsonInsightsRequestDTO;
 import org.irs.dto.SqlInsightsRequestDTO;
 
-@Path("/")
+@Path("/api")
 @RegisterRestClient(configKey = "accident-insights-api")
 public interface AccidentInsightsClient {
     
