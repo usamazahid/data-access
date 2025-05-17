@@ -40,6 +40,10 @@ import org.irs.service.AccidentReportService;
 import org.irs.service.DispatchService;
 import org.irs.service.LovService;
 import org.irs.service.UserDetailService;
+import org.irs.service.AccidentInsightsService;
+import org.irs.dto.JsonInsightsRequestDTO;
+import org.irs.dto.AskRequestDTO;
+import org.irs.dto.SqlInsightsRequestDTO;
 
 
 @Path("/irs")
@@ -53,6 +57,9 @@ public class MainResource {
 
     @Inject
     AccidentReportService accidentReportService;
+
+    @Inject
+    AccidentInsightsService accidentInsightsService;
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -354,6 +361,51 @@ public class MainResource {
             return Response.serverError()
                          .entity(new ErrorResponse("Error fetching statistics: " + e.getMessage()))
                          .build();
+        }
+    }
+
+    @POST
+    @Path("/accident-insights/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response getJsonInsights(JsonInsightsRequestDTO request) {
+        try {
+            Object response = accidentInsightsService.getJsonInsights(request);
+            return Response.ok(response).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error getting JSON insights: " + e.getMessage()))
+                    .build();
+        }
+    }
+
+    @POST
+    @Path("/accident-insights/ask")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response askQuestion(AskRequestDTO request) {
+        try {
+            Object response = accidentInsightsService.askQuestion(request);
+            return Response.ok(response).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error asking question: " + e.getMessage()))
+                    .build();
+        }
+    }
+
+    @POST
+    @Path("/accident-insights/sql")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response getSqlInsights(SqlInsightsRequestDTO request) {
+        try {
+            Object response = accidentInsightsService.getSqlInsights(request);
+            return Response.ok(response).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error getting SQL insights: " + e.getMessage()))
+                    .build();
         }
     }
 
