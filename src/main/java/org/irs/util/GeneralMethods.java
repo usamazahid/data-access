@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import java.util.Map;
+import org.apache.commons.text.similarity.JaroWinklerSimilarity;
 
 @ApplicationScoped
 public class GeneralMethods {
@@ -89,5 +90,45 @@ public class GeneralMethods {
         return "1 month"; // Default fallback
     }
 
+    public static boolean isMatchingQuestion(String key, String question) {
+        if (key == null || question == null) {
+            return false;
+        }
+
+        // 1) Normalize: lowercase, strip punctuation, collapse whitespace
+        String normKey = normalize(key);
+        String normQuestion = normalize(question);
+
+        // 2) Exact match?
+        if (normKey.equals(normQuestion)) {
+            return true;
+        }
+
+        // 3) Fuzzy match?
+        JaroWinklerSimilarity jw = new JaroWinklerSimilarity();
+        double score = jw.apply(normKey, normQuestion);
+        return score >= ConstantValues.FUZZY_THRESHOLD;
+    }
+
+    private static String normalize(String s) {
+        // Remove any non-alphanumeric characters, turn to single spaces, lowercase
+        return s
+            .toLowerCase()
+            .replaceAll("[^a-z0-9 ]+", " ")
+            .trim()
+            .replaceAll("\\s+", " ");
+    }
+
+    public String routeQuery(Map<String, String> questionSqlMap, String userQuestion) {
+        if(userQuestion!=null){
+            for (Map.Entry<String, String> entry : questionSqlMap.entrySet()) {
+                String key = entry.getKey();
+                if (isMatchingQuestion(key, userQuestion)) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return null;
+    }
      
 }

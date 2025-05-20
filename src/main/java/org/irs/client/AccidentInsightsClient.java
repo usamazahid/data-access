@@ -6,9 +6,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.irs.dto.AskRequestDTO;
+import org.irs.dto.GenerateInsightsRequestDTO;
 import org.irs.dto.JsonInsightsRequestDTO;
-import org.irs.dto.SqlInsightsRequestDTO;
 
 @Path("/api")
 @RegisterRestClient(configKey = "accident-insights-api")
@@ -24,11 +23,11 @@ public interface AccidentInsightsClient {
     @Path("/ask")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    Object askQuestion(AskRequestDTO request);
+    Object askQuestion(GenerateInsightsRequestDTO request);
 
     @POST
     @Path("/sql-insights")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    Object getSqlInsights(SqlInsightsRequestDTO request);
+    Object getSqlInsights(GenerateInsightsRequestDTO request);
 } 
