@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class ConstantValues {
     public static final String BASE_DIR = "/external-storage/accident-reports/";
-    public static final double FUZZY_THRESHOLD = 0.85;
+    public static final double FUZZY_THRESHOLD = 0.95;
     public static final Map<String, String> QUESTION_SQL_MAP;
     
     static {
@@ -55,6 +55,10 @@ public class ConstantValues {
             "SELECT gt.label AS gender, COUNT(*) AS count FROM accident_reports ar JOIN gender_types gt ON ar.gender = gt.id GROUP BY gt.label"
         );
         m.put(
+            "Count of Hit and Run accidents",
+            "SELECT COUNT(*) AS hit_and_run_accidents FROM accident_reports ar JOIN accident_types at ON ar.accident_type_id = at.id WHERE at.label = 'Hit and Run'"
+        );
+        m.put(
             "Top 5 accident locations by frequency",
             "SELECT accident_location, COUNT(*) AS total FROM accident_reports GROUP BY accident_location ORDER BY total DESC LIMIT 5"
         );
@@ -65,10 +69,6 @@ public class ConstantValues {
         m.put(
             "Count of accidents where fitness certificate was expired",
             "SELECT COUNT(*) AS expired_fitness_accidents FROM accident_reports ar JOIN vehicle_details vd ON ar.report_id = vd.report_id WHERE vd.fitness_certificate_status = 'Expired'"
-        );
-        m.put(
-            "Count of \"Hit and Run\" accidents",
-            "SELECT COUNT(*) AS hit_and_run_accidents FROM accident_reports ar JOIN accident_types at ON ar.accident_type_id = at.id WHERE at.label = 'Hit and Run'"
         );
         
         QUESTION_SQL_MAP = Collections.unmodifiableMap(m);
