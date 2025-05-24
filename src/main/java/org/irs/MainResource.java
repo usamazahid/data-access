@@ -40,6 +40,7 @@ import org.irs.dto.VisibilityDTO;
 import org.irs.dto.WeatherConditionDTO;
 import org.irs.service.AccidentInsightsService;
 import org.irs.service.AccidentReportService;
+import org.irs.service.ClusterEvaluationService;
 import org.irs.service.DispatchService;
 import org.irs.service.LovService;
 import org.irs.service.UserDetailService;
@@ -59,6 +60,9 @@ public class MainResource {
 
     @Inject
     AccidentInsightsService accidentInsightsService;
+
+    @Inject
+    ClusterEvaluationService clusterEvaluationService;
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -421,6 +425,21 @@ public class MainResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error getting SQL insights: " + e.getMessage()))
                     .build();
+        }
+    }
+
+    @GET
+    @Path("/evaluateClustering")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response evaluateClustering(RequestDto requestDto) {
+        try {
+            Map<String, Object> evaluationResults = clusterEvaluationService.evaluateClustering(requestDto);
+            return Response.ok(evaluationResults).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(Map.of("error", e.getMessage()))
+                .build();
         }
     }
 
