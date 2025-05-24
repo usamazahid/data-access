@@ -32,6 +32,7 @@ import org.irs.dto.VehicleFitnessDTO;
 import org.irs.dto.WitnessDTO;
 import org.irs.util.ConstantValues;
 import org.irs.util.GeneralMethods;
+import org.irs.util.GeoUtils;
 
 
  
@@ -467,7 +468,60 @@ public class AccidentReportService {
         return responseDTO;
     }
     
- 
+    
+    private double calculateEpsilon(int dataSize) {
+        // For Karachi city data, use larger epsilon values
+        // Base epsilon of 500 meters (0.5 km) for city-wide clustering
+        
+        // Adjust epsilon based on data size ranges
+        if (dataSize < 50) {
+            return 0.5; // 500 meters for small samples
+        } else if (dataSize < 200) {
+            return 0.75; // 750 meters for medium samples
+        } else if (dataSize < 500) {
+            return 1.0; // 1 km for larger samples
+        } else {
+            // For very large datasets, use logarithmic scaling
+            // Base of 1.0 km, scale with log10 of data size
+            // Cap at 2.0 km to prevent too large clusters
+            double baseEpsilon = 1.0;
+            double scaleFactor = Math.log10(dataSize);
+            return Math.min(baseEpsilon * scaleFactor, 2.0);
+        }
+    }
+    
+    private int calculateMinPoints(int dataSize) {
+        // For Karachi city data, adjust minPoints based on sample size
+        // Use smaller minPoints since we're dealing with city-wide data
+        if (dataSize < 50) {
+            return 2; // Minimum 2 points for small samples
+        } else if (dataSize < 200) {
+            return 3; // 3 points for medium samples
+        } else if (dataSize < 500) {
+            return 4; // 4 points for larger samples
+        } else {
+            // For very large datasets, use up to 5 points
+            return 5;
+        }
+    }
+    
+    private boolean isBlackSpot(int pointsCount, double totalSeverity) {
+        // Dynamic black spot detection for Karachi city data
+        // Calculate average severity per point
+        double avgSeverity = totalSeverity / pointsCount;
+        
+        // A location is considered a black spot if it meets ANY of these criteria:
+        // 1. Very high density: More than 5 accidents in the same area
+        // 2. High density: More than 3 accidents
+        // 3. High severity: Average severity > 2 with at least 2 accidents
+        // 4. Critical severity: Total severity > 4 with at least 2 accidents
+        
+        return pointsCount >= 5 || // Very high density
+               pointsCount >= 3 || // High density
+               (avgSeverity > 2 && pointsCount >= 2) || // High average severity
+               (totalSeverity > 4 && pointsCount >= 2); // Critical severity
+    }
+
     public List<Map<String, Object>> getClusteredAccidentsDBSCAN(RequestDto requestDto) {
         // 1. Fetch data with pagination
         List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(requestDto);
@@ -487,6 +541,8 @@ public class AccidentReportService {
         double epsilon = calculateEpsilon(accidents.size());
         int minPoints = calculateMinPoints(accidents.size());
         
+        System.out.println("DBSCAN Parameters - Epsilon: " + epsilon + ", MinPoints: " + minPoints);
+        
         DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<>(epsilon, minPoints);
         List<Cluster<DoublePoint>> clusters = clusterer.cluster(points);
         System.out.println("Total clusters formed: " + clusters.size());
@@ -500,6 +556,7 @@ public class AccidentReportService {
                 double sumLat = 0, sumLon = 0;
                 List<Map<String, Object>> clusterPoints = new ArrayList<>();
                 double totalSeverity = 0;
+                
                 for (DoublePoint point : cluster.getPoints()) {
                     double latitude = point.getPoint()[0];
                     double longitude = point.getPoint()[1];
@@ -525,19 +582,31 @@ public class AccidentReportService {
                     clusterPoints.add(pointData);
                 }
     
-                // Add cluster center
+                // Calculate cluster center
+                double centerLat = sumLat / cluster.getPoints().size();
+                double centerLon = sumLon / cluster.getPoints().size();
+                
+                // Calculate cluster radius (maximum distance from center to any point)
+                double maxRadius = clusterPoints.stream()
+                    .mapToDouble(point -> {
+                        double pointLat = ((Number) point.get("latitude")).doubleValue();
+                        double pointLon = ((Number) point.get("longitude")).doubleValue();
+                        return GeoUtils.calculateDistance(centerLat, centerLon, pointLat, pointLon);
+                    })
+                    .max()
+                    .orElse(0.0);
+    
+                // Add cluster data
                 clusterData.put("center", Map.of(
-                    "latitude", sumLat / cluster.getPoints().size(),
-                    "longitude", sumLon / cluster.getPoints().size()
+                    "latitude", centerLat,
+                    "longitude", centerLon
                 ));
                 
-                // Add points and metadata
                 clusterData.put("points", clusterPoints);
                 clusterData.put("pointsLength", clusterPoints.size());
                 clusterData.put("totalSeverity", totalSeverity);
-                // Improved black spot detection
-                boolean isBlackSpot = isBlackSpot(clusterPoints.size(),totalSeverity);
-                clusterData.put("isBlackSpot", isBlackSpot);
+                clusterData.put("radius", maxRadius);
+                clusterData.put("isBlackSpot", isBlackSpot(clusterPoints.size(), totalSeverity));
                 
                 return clusterData;
             })
@@ -545,31 +614,6 @@ public class AccidentReportService {
     }
     
     // Helper methods
-    private double calculateEpsilon(int dataSize) {
-        // Adjust epsilon based on data density
-        if (dataSize < 50) return 0.025;
-        if (dataSize < 200) return 0.02;
-        if (dataSize < 300) return 0.015;
-        return 0.01;
-    }
-    
-    private int calculateMinPoints(int dataSize) {
-        // Adjust minPoints based on data density
-        if (dataSize < 50) return 2;
-        if (dataSize < 200) return 3;
-        if (dataSize < 300) return 4;
-        return 5;
-    }
-    
-    private boolean isBlackSpot(int pointCount,double totalSeverity) {
-        // Consider both point density and severity
-        return pointCount > 5 || // High density
-               (pointCount > 2 && totalSeverity > 20) || // Medium density with high severity
-               totalSeverity > 30; // Very high severity
-    }
-
-     
-
     public List<Cluster<DoublePoint>> getClusteredAccidents(RequestDto requestDto) {
       List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(requestDto);
 
