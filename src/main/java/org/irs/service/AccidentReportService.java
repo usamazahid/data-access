@@ -485,91 +485,105 @@ public class AccidentReportService {
         else return 8;
     }
     
-    private boolean isBlackSpot(int pointsCount, double totalSeverity) {
-        // Dynamic black spot detection for Karachi city data
-        // Calculate average severity per point
+    private boolean isBlackSpot(int pointsCount, double totalSeverity, double dynamicThreshold) {
         double avgSeverity = totalSeverity / pointsCount;
-        
-        // A location is considered a black spot if it meets ANY of these criteria:
-        // 1. Very high density: More than 5 accidents in the same area
-        // 2. High density: More than 3 accidents
-        // 3. High severity: Average severity > 2 with at least 2 accidents
-        // 4. Critical severity: Total severity > 4 with at least 2 accidents
-        
-        return pointsCount >= 5 || // Very high density
-               pointsCount >= 3 || // High density
-               (avgSeverity > 2 && pointsCount >= 2) || // High average severity
-               (totalSeverity > 4 && pointsCount >= 2); // Critical severity
+    
+        // Dynamic density threshold based on data
+        if (pointsCount >= dynamicThreshold) return true;
+    
+        // Severity-based fallback logic
+        if (pointsCount >= 3 && avgSeverity > 2.0) return true;
+        if (pointsCount >= 2 && totalSeverity > 4.0) return true;
+    
+        return false;
     }
 
-
-public List<Map<String, Object>> getClusteredAccidentsDBSCAN(RequestDto requestDto) {
-    List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(requestDto);
-    System.out.println("Total records fetched: " + accidents.size());
-
-    if (accidents.isEmpty()) return Collections.emptyList();
-
-    // Convert to double[][] for SMILE
-    double[][] dataPoints = accidents.stream()
-        .map(a -> new double[]{a.latitude, a.longitude})
-        .toArray(double[][]::new);
-
-    double epsilon = calculateEpsilon(accidents.size());
-    int minPoints = calculateMinPoints(accidents.size());
-
-    System.out.println("DBSCAN Parameters - Epsilon: " + epsilon + ", MinPoints: " + minPoints);
-
-    DBSCAN<double[]> dbscan = DBSCAN.fit(dataPoints, new HaversineDistance(), minPoints, epsilon);
-
-    // Group indices by cluster label
-    Map<Integer, List<Integer>> clusters = new HashMap<>();
-    for (int i = 0; i < dbscan.y.length; i++) {
-        int label = dbscan.y[i];
-        if (label == -1) continue; // skip noise
-        clusters.computeIfAbsent(label, k -> new ArrayList<>()).add(i);
+    private double calculateDensityThreshold(List<Integer> pointsPerCluster) {
+        if (pointsPerCluster.isEmpty()) return 5;
+    
+        Collections.sort(pointsPerCluster);
+        int index = (int) (0.75 * pointsPerCluster.size());
+        return pointsPerCluster.get(index);
     }
+    
+    
 
-    System.out.println("Total clusters formed: " + clusters.size());
+    public List<Map<String, Object>> getClusteredAccidentsDBSCAN(RequestDto requestDto) {
+        List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(requestDto);
+        System.out.println("Total records fetched: " + accidents.size());
 
-    return clusters.values().parallelStream()
-        .map(indices -> {
-            Map<String, Object> clusterData = new HashMap<>();
-            double sumLat = 0, sumLon = 0, totalSeverity = 0;
-            List<Map<String, Object>> clusterPoints = new ArrayList<>();
+        if (accidents.isEmpty()) return Collections.emptyList();
 
-            for (int index : indices) {
-                AccidentReportResponseDTO acc = accidents.get(index);
-                sumLat += acc.latitude;
-                sumLon += acc.longitude;
-                totalSeverity += acc.severity;
+        // Convert to double[][] for SMILE
+        double[][] dataPoints = accidents.stream()
+            .map(a -> new double[]{a.latitude, a.longitude})
+            .toArray(double[][]::new);
 
-                clusterPoints.add(Map.of(
-                    "id", acc.id,
-                    "latitude", acc.latitude,
-                    "longitude", acc.longitude,
-                    "severity", acc.severity
-                ));
-            }
+        double epsilon = calculateEpsilon(accidents.size());
+        int minPoints = calculateMinPoints(accidents.size());
 
-            double centerLat = sumLat / indices.size();
-            double centerLon = sumLon / indices.size();
+        System.out.println("DBSCAN Parameters - Epsilon: " + epsilon + ", MinPoints: " + minPoints);
 
-            double radius = clusterPoints.stream()
-                .mapToDouble(p -> GeoUtils.calculateDistance(
-                    centerLat, centerLon,
-                    (double) p.get("latitude"), (double) p.get("longitude"))
-                ).max().orElse(0);
+        DBSCAN<double[]> dbscan = DBSCAN.fit(dataPoints, new HaversineDistance(), minPoints, epsilon);
 
-            clusterData.put("center", Map.of("latitude", centerLat, "longitude", centerLon));
-            clusterData.put("points", clusterPoints);
-            clusterData.put("pointsLength", clusterPoints.size());
-            clusterData.put("totalSeverity", totalSeverity);
-            clusterData.put("radius", radius);
-            clusterData.put("isBlackSpot", isBlackSpot(clusterPoints.size(), totalSeverity));
+        // Group indices by cluster label
+        Map<Integer, List<Integer>> clusters = new HashMap<>();
+        Map<Integer, Integer> clusterSizes = new HashMap<>();  // Keep track of size per cluster
 
-            return clusterData;
-        }).collect(Collectors.toList());
-}
+        for (int i = 0; i < dbscan.y.length; i++) {
+            int label = dbscan.y[i];
+            if (label == -1) continue; // skip noise
+            clusters.computeIfAbsent(label, k -> new ArrayList<>()).add(i);
+            clusterSizes.put(label, clusterSizes.getOrDefault(label, 0) + 1);
+        }
+
+        // Now get list of cluster sizes directly:
+        List<Integer> pointsPerCluster = new ArrayList<>(clusterSizes.values());
+
+        double dynamicThreshold = calculateDensityThreshold(pointsPerCluster);
+
+
+        System.out.println("Total clusters formed: " + clusters.size());
+
+        return clusters.values().parallelStream()
+            .map(indices -> {
+                Map<String, Object> clusterData = new HashMap<>();
+                double sumLat = 0, sumLon = 0, totalSeverity = 0;
+                List<Map<String, Object>> clusterPoints = new ArrayList<>();
+
+                for (int index : indices) {
+                    AccidentReportResponseDTO acc = accidents.get(index);
+                    sumLat += acc.latitude;
+                    sumLon += acc.longitude;
+                    totalSeverity += acc.severity;
+
+                    clusterPoints.add(Map.of(
+                        "id", acc.id,
+                        "latitude", acc.latitude,
+                        "longitude", acc.longitude,
+                        "severity", acc.severity
+                    ));
+                }
+
+                double centerLat = sumLat / indices.size();
+                double centerLon = sumLon / indices.size();
+
+                double radius = clusterPoints.stream()
+                    .mapToDouble(p -> GeoUtils.calculateDistance(
+                        centerLat, centerLon,
+                        (double) p.get("latitude"), (double) p.get("longitude"))
+                    ).max().orElse(0);
+
+                clusterData.put("center", Map.of("latitude", centerLat, "longitude", centerLon));
+                clusterData.put("points", clusterPoints);
+                clusterData.put("pointsLength", clusterPoints.size());
+                clusterData.put("totalSeverity", totalSeverity);
+                clusterData.put("radius", radius);
+                clusterData.put("isBlackSpot", isBlackSpot(clusterPoints.size(), totalSeverity,dynamicThreshold));
+
+                return clusterData;
+            }).collect(Collectors.toList());
+    }
 
     
     // Helper methods
