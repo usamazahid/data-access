@@ -1,6 +1,6 @@
 package org.irs.dto;
 
-public class SqlInsightsRequestDTO {
+public class GenerateInsightsRequestDTO {
     private String sql;
     private String question;
 
