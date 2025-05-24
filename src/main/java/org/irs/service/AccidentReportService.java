@@ -33,7 +33,10 @@ import org.irs.dto.WitnessDTO;
 import org.irs.util.ConstantValues;
 import org.irs.util.GeneralMethods;
 import org.irs.util.GeoUtils;
+import org.irs.util.HaversineDistance;
 
+import smile.clustering.DBSCAN;
+import smile.math.distance.EuclideanDistance;
 
  
 
@@ -470,39 +473,16 @@ public class AccidentReportService {
     
     
     private double calculateEpsilon(int dataSize) {
-        // For Karachi city data, use larger epsilon values
-        // Base epsilon of 500 meters (0.5 km) for city-wide clustering
-        
-        // Adjust epsilon based on data size ranges
-        if (dataSize < 50) {
-            return 0.5; // 500 meters for small samples
-        } else if (dataSize < 200) {
-            return 0.75; // 750 meters for medium samples
-        } else if (dataSize < 500) {
-            return 1.0; // 1 km for larger samples
-        } else {
-            // For very large datasets, use logarithmic scaling
-            // Base of 1.0 km, scale with log10 of data size
-            // Cap at 2.0 km to prevent too large clusters
-            double baseEpsilon = 1.0;
-            double scaleFactor = Math.log10(dataSize);
-            return Math.min(baseEpsilon * scaleFactor, 2.0);
-        }
+        if (dataSize < 100) return 0.2;   // 200 meters
+        else if (dataSize < 1000) return 0.3; // 300 meters
+        else return 0.5;   // 500 meters
     }
     
+    
     private int calculateMinPoints(int dataSize) {
-        // For Karachi city data, adjust minPoints based on sample size
-        // Use smaller minPoints since we're dealing with city-wide data
-        if (dataSize < 50) {
-            return 2; // Minimum 2 points for small samples
-        } else if (dataSize < 200) {
-            return 3; // 3 points for medium samples
-        } else if (dataSize < 500) {
-            return 4; // 4 points for larger samples
-        } else {
-            // For very large datasets, use up to 5 points
-            return 5;
-        }
+        if (dataSize < 100) return 3;
+        else if (dataSize < 1000) return 5;
+        else return 8;
     }
     
     private boolean isBlackSpot(int pointsCount, double totalSeverity) {
@@ -522,96 +502,75 @@ public class AccidentReportService {
                (totalSeverity > 4 && pointsCount >= 2); // Critical severity
     }
 
-    public List<Map<String, Object>> getClusteredAccidentsDBSCAN(RequestDto requestDto) {
-        // 1. Fetch data with pagination
-        List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(requestDto);
-        System.out.println("Total records fetched: " + accidents.size());
-    
-        // 2. Early return if no data
-        if (accidents.isEmpty()) {
-            return Collections.emptyList();
-        }
-    
-        // 3. Convert accidents to points with parallel processing
-        List<DoublePoint> points = accidents.parallelStream()
-            .map(accident -> new DoublePoint(new double[]{accident.latitude, accident.longitude}))
-            .collect(Collectors.toList());
-    
-        // 4. Dynamic DBSCAN parameters based on data size
-        double epsilon = calculateEpsilon(accidents.size());
-        int minPoints = calculateMinPoints(accidents.size());
-        
-        System.out.println("DBSCAN Parameters - Epsilon: " + epsilon + ", MinPoints: " + minPoints);
-        
-        DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<>(epsilon, minPoints);
-        List<Cluster<DoublePoint>> clusters = clusterer.cluster(points);
-        System.out.println("Total clusters formed: " + clusters.size());
-    
-        // 5. Process clusters with parallel streams
-        return clusters.parallelStream()
-            .map(cluster -> {
-                Map<String, Object> clusterData = new HashMap<>();
-                
-                // Calculate cluster center and collect points
-                double sumLat = 0, sumLon = 0;
-                List<Map<String, Object>> clusterPoints = new ArrayList<>();
-                double totalSeverity = 0;
-                
-                for (DoublePoint point : cluster.getPoints()) {
-                    double latitude = point.getPoint()[0];
-                    double longitude = point.getPoint()[1];
-                    sumLat += latitude;
-                    sumLon += longitude;
-                    
-                    // Find the original accident data
-                    AccidentReportResponseDTO accident = accidents.stream()
-                        .filter(a -> a.latitude == latitude && a.longitude == longitude)
-                        .findFirst()
-                        .orElse(null);
-                    
-                    Map<String, Object> pointData = new HashMap<>();
-                    pointData.put("latitude", latitude);
-                    pointData.put("longitude", longitude);
-                    
-                    if (accident != null) {
-                        pointData.put("id", accident.id);
-                        pointData.put("severity", accident.severity);
-                        totalSeverity += accident.severity;
-                    }
-                    
-                    clusterPoints.add(pointData);
-                }
-    
-                // Calculate cluster center
-                double centerLat = sumLat / cluster.getPoints().size();
-                double centerLon = sumLon / cluster.getPoints().size();
-                
-                // Calculate cluster radius (maximum distance from center to any point)
-                double maxRadius = clusterPoints.stream()
-                    .mapToDouble(point -> {
-                        double pointLat = ((Number) point.get("latitude")).doubleValue();
-                        double pointLon = ((Number) point.get("longitude")).doubleValue();
-                        return GeoUtils.calculateDistance(centerLat, centerLon, pointLat, pointLon);
-                    })
-                    .max()
-                    .orElse(0.0);
-    
-                // Add cluster data
-                clusterData.put("center", Map.of(
-                    "latitude", centerLat,
-                    "longitude", centerLon
-                ));
-                
-                clusterData.put("points", clusterPoints);
-                clusterData.put("pointsLength", clusterPoints.size());
-                clusterData.put("totalSeverity", totalSeverity);
-                clusterData.put("radius", maxRadius);
-                clusterData.put("isBlackSpot", isBlackSpot(clusterPoints.size(), totalSeverity));
-                
-                return clusterData;
-            })
-            .collect(Collectors.toList());
+
+public List<Map<String, Object>> getClusteredAccidentsDBSCAN(RequestDto requestDto) {
+    List<AccidentReportResponseDTO> accidents = getAccidentHeatmapData(requestDto);
+    System.out.println("Total records fetched: " + accidents.size());
+
+    if (accidents.isEmpty()) return Collections.emptyList();
+
+    // Convert to double[][] for SMILE
+    double[][] dataPoints = accidents.stream()
+        .map(a -> new double[]{a.latitude, a.longitude})
+        .toArray(double[][]::new);
+
+    double epsilon = calculateEpsilon(accidents.size());
+    int minPoints = calculateMinPoints(accidents.size());
+
+    System.out.println("DBSCAN Parameters - Epsilon: " + epsilon + ", MinPoints: " + minPoints);
+
+    DBSCAN<double[]> dbscan = DBSCAN.fit(dataPoints, new HaversineDistance(), minPoints, epsilon);
+
+    // Group indices by cluster label
+    Map<Integer, List<Integer>> clusters = new HashMap<>();
+    for (int i = 0; i < dbscan.y.length; i++) {
+        int label = dbscan.y[i];
+        if (label == -1) continue; // skip noise
+        clusters.computeIfAbsent(label, k -> new ArrayList<>()).add(i);
     }
+
+    System.out.println("Total clusters formed: " + clusters.size());
+
+    return clusters.values().parallelStream()
+        .map(indices -> {
+            Map<String, Object> clusterData = new HashMap<>();
+            double sumLat = 0, sumLon = 0, totalSeverity = 0;
+            List<Map<String, Object>> clusterPoints = new ArrayList<>();
+
+            for (int index : indices) {
+                AccidentReportResponseDTO acc = accidents.get(index);
+                sumLat += acc.latitude;
+                sumLon += acc.longitude;
+                totalSeverity += acc.severity;
+
+                clusterPoints.add(Map.of(
+                    "id", acc.id,
+                    "latitude", acc.latitude,
+                    "longitude", acc.longitude,
+                    "severity", acc.severity
+                ));
+            }
+
+            double centerLat = sumLat / indices.size();
+            double centerLon = sumLon / indices.size();
+
+            double radius = clusterPoints.stream()
+                .mapToDouble(p -> GeoUtils.calculateDistance(
+                    centerLat, centerLon,
+                    (double) p.get("latitude"), (double) p.get("longitude"))
+                ).max().orElse(0);
+
+            clusterData.put("center", Map.of("latitude", centerLat, "longitude", centerLon));
+            clusterData.put("points", clusterPoints);
+            clusterData.put("pointsLength", clusterPoints.size());
+            clusterData.put("totalSeverity", totalSeverity);
+            clusterData.put("radius", radius);
+            clusterData.put("isBlackSpot", isBlackSpot(clusterPoints.size(), totalSeverity));
+
+            return clusterData;
+        }).collect(Collectors.toList());
+}
+
     
     // Helper methods
     public List<Cluster<DoublePoint>> getClusteredAccidents(RequestDto requestDto) {
