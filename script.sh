@@ -5,7 +5,7 @@ set -e
 
 DEFAULT_DIRECTORY_FILES="/external-storage/accident-reports"
 DEFAULT_REPO_NAME="data-access"
-DEFAULT_DB_IP="0.0.0.0"
+DEFAULT_DB_IP="host.docker.internal"
 DEFAULT_FLASK_IP="host.docker.internal"
 DEFAULT_FLASK_PORT="5000"
 
