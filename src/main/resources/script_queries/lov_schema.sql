@@ -253,6 +253,7 @@ INSERT INTO public.gender_types (label, description)
 VALUES
     ('female',NULL),
     ('male',NULL),
+    ('both',NULL),
     ('other', NULL)
 ON CONFLICT (label) DO NOTHING;
 
