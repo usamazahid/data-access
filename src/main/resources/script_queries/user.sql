@@ -1,15 +1,6 @@
---************************************** Database and Deletions **************************************
--- Create database if it doesn't already exist
---CREATE DATABASE IF NOT EXISTS irs;
-
--- Drop tables if they exist to reset the structure
-DROP TABLE IF EXISTS role_permissions CASCADE;
-DROP TABLE IF EXISTS user_permissions CASCADE;
-DROP TABLE IF EXISTS user_roles CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS roles CASCADE;
-DROP TABLE IF EXISTS permissions CASCADE;
-
+--************************************** User Management Schema **************************************
+-- Tables will be created only if they don't exist
+-- Data will be inserted only if not already present
 --************************************** Table Creation **************************************
 
 -- Users table

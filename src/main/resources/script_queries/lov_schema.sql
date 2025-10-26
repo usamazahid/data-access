@@ -1,10 +1,8 @@
 
----deleting
-DROP TABLE IF EXISTS accident_types CASCADE; 
-DROP TABLE IF EXISTS patient_victim CASCADE; 
-DROP TABLE IF EXISTS vehicle_involved CASCADE; 
-DROP TABLE IF EXISTS organizations CASCADE;  
-DROP TABLE IF EXISTS user_organizations CASCADE;  
+---------------------------------------------------
+-- LOV Schema Setup (List of Values)
+-- Tables will be created only if they don't exist
+---------------------------------------------------  
 
 -- Create accident_types table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.accident_types (
@@ -131,7 +129,7 @@ CREATE TABLE IF NOT EXISTS ambulance_drivers (
 );
 
 -- Apparent Cause Table
-CREATE TABLE apparent_cause (
+CREATE TABLE IF NOT EXISTS apparent_cause (
     id SERIAL PRIMARY KEY,
     cause VARCHAR(50) NOT NULL,
     other_details VARCHAR(255)
@@ -144,10 +142,11 @@ INSERT INTO apparent_cause (cause, other_details) VALUES
 ('Driver Negligence', NULL),
 ('Weather Conditions', NULL),
 ('Mechanical Failure', NULL),
-('Other', 'Driver fatigue');
+('Other', 'Driver fatigue')
+ON CONFLICT DO NOTHING;
 
 -- Weather Condition Table
-CREATE TABLE weather_condition (
+CREATE TABLE IF NOT EXISTS weather_condition (
     id SERIAL PRIMARY KEY,
     condition VARCHAR(50) NOT NULL
 );
@@ -157,10 +156,11 @@ INSERT INTO weather_condition (condition) VALUES
 ('Rain'),
 ('Fog'),
 ('Dust'),
-('Windy');
+('Windy')
+ON CONFLICT DO NOTHING;
 
 -- Visibility Table
-CREATE TABLE visibility (
+CREATE TABLE IF NOT EXISTS visibility (
     id SERIAL PRIMARY KEY,
     level VARCHAR(50) NOT NULL
 );
@@ -168,10 +168,11 @@ CREATE TABLE visibility (
 INSERT INTO visibility (level) VALUES 
 ('Good'),
 ('Moderate'),
-('Poor');
+('Poor')
+ON CONFLICT DO NOTHING;
 
 -- Road Surface Condition Table
-CREATE TABLE road_surface_condition (
+CREATE TABLE IF NOT EXISTS road_surface_condition (
     id SERIAL PRIMARY KEY,
     condition VARCHAR(50) NOT NULL
 );
@@ -180,10 +181,11 @@ INSERT INTO road_surface_condition (condition) VALUES
 ('Dry'),
 ('Wet'),
 ('Damaged'),
-('Under Construction');
+('Under Construction')
+ON CONFLICT DO NOTHING;
 
 -- Road Type Table
-CREATE TABLE road_type (
+CREATE TABLE IF NOT EXISTS road_type (
     id SERIAL PRIMARY KEY,
     type VARCHAR(50) NOT NULL
 );
@@ -193,10 +195,11 @@ INSERT INTO road_type (type) VALUES
 ('Urban Road'),
 ('Intersection'),
 ('Service Road'),
-('Bridge/Flyover');
+('Bridge/Flyover')
+ON CONFLICT DO NOTHING;
 
 -- Road Markings / Signage Table
-CREATE TABLE road_signage (
+CREATE TABLE IF NOT EXISTS road_signage (
     id SERIAL PRIMARY KEY,
     status VARCHAR(50) NOT NULL
 );
@@ -204,10 +207,11 @@ CREATE TABLE road_signage (
 INSERT INTO road_signage (status) VALUES 
 ('Clear'),
 ('Faded'),
-('Missing');
+('Missing')
+ON CONFLICT DO NOTHING;
 
 -- Case Referred To Table
-CREATE TABLE case_referred_to (
+CREATE TABLE IF NOT EXISTS case_referred_to (
     id SERIAL PRIMARY KEY,
     unit VARCHAR(50) NOT NULL
 );
@@ -216,10 +220,11 @@ INSERT INTO case_referred_to (unit) VALUES
 ('Investigation Unit'),
 ('Traffic Police'),
 ('Legal Aid'),
-('Not Applicable');
+('Not Applicable')
+ON CONFLICT DO NOTHING;
 
 -- Preliminary Fault Assessment Table
-CREATE TABLE preliminary_fault_assessment (
+CREATE TABLE IF NOT EXISTS preliminary_fault_assessment (
     id SERIAL PRIMARY KEY,
     fault VARCHAR(50) NOT NULL
 );
@@ -230,7 +235,8 @@ INSERT INTO preliminary_fault_assessment (fault) VALUES
 ('Road Condition'),
 ('Mechanical Failure'),
 ('Shared Fault'),
-('Undetermined');
+('Undetermined')
+ON CONFLICT DO NOTHING;
 
 
 -- Create accident_types table if it doesn't exist

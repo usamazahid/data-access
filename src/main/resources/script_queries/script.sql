@@ -22,18 +22,25 @@ INSERT INTO public.user_roles (user_id, role_id)
 SELECT u.id, 2
 FROM public.users u
 WHERE u.designation = 'citizen_auto'
+ON CONFLICT DO NOTHING;
 
 ---csv insertion_____
-
-sudo chmod 644 /tmp/file_name.csv
-COPY public.accident_reports (
-  latitude, longitude, accident_location, gis_coordinates,
-  user_id, num_affecties, age, created_at, status,
-  image_uri, audio_uri, video_uri, description,
-  officer_name, officer_designation, officer_contact_no, officer_notes,
-  weather_condition, visibility, road_surface_condition, road_type,
-  road_markings, preliminary_fault, gender, cause, vehicle_involved_id,
-  patient_victim_id, accident_type_id, severity
-)
-FROM '/tmp/file_name.csv'
-DELIMITER ',' CSV HEADER;
+-- Note: CSV insertion is handled by the setup-database.sh script
+-- The following is just documentation/example:
+--
+-- Steps to import CSV manually:
+-- 1. Copy CSV file to container: docker cp file.csv postgres-irs:/tmp/file.csv
+-- 2. Set permissions: docker exec postgres-irs chmod 644 /tmp/file.csv
+-- 3. Run COPY command in psql
+--
+-- COPY public.accident_reports (
+--   latitude, longitude, accident_location, gis_coordinates,
+--   user_id, num_affecties, age, created_at, status,
+--   image_uri, audio_uri, video_uri, description,
+--   officer_name, officer_designation, officer_contact_no, officer_notes,
+--   weather_condition, visibility, road_surface_condition, road_type,
+--   road_markings, preliminary_fault, gender, cause, vehicle_involved_id,
+--   patient_victim_id, accident_type_id, severity
+-- )
+-- FROM '/tmp/file_name.csv'
+-- DELIMITER ',' CSV HEADER;

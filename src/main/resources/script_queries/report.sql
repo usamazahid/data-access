@@ -1,19 +1,15 @@
 
+--************************************** Accident Reports Schema **************************************
+-- PostgreSQL extension of PostGIS
+-- Tables will be created only if they don't exist
+--************************************** 
 
---postgrel extension of postgis
---step1: sudo apt install postgis postgresql-17-postgis-3
---step2: sudo systemctl restart postgresql
---step3: SELECT * FROM pg_available_extensions WHERE name = 'postgis';
---step4: 
-CREATE EXTENSION postgis;
-SELECT postgis_version();
+-- PostGIS extension should already be created by setup script
+-- Verify PostGIS version
+-- SELECT postgis_version();
 
-
---drop table accident_reports;
-
-
-
-CREATE TABLE public.accident_reports (
+-- Create accident_reports table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.accident_reports (
 	report_id serial4 NOT NULL,
 	latitude numeric(9, 6) NULL,
 	longitude numeric(9, 6) NULL,
@@ -62,14 +58,22 @@ CREATE TABLE public.accident_reports (
 
 -- Convert existing latitude & longitude into the PostGIS geometry format
 UPDATE accident_reports 
-SET gis_coordinates = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326);
+SET gis_coordinates = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
+WHERE gis_coordinates IS NULL AND longitude IS NOT NULL AND latitude IS NOT NULL;
 
-CREATE INDEX accidents_location_gist ON accident_reports USING GIST(gis_coordinates);
-
---drop table accident_report_images ;
+-- Create GIS index if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes 
+        WHERE tablename = 'accident_reports' AND indexname = 'accidents_location_gist'
+    ) THEN
+        CREATE INDEX accidents_location_gist ON accident_reports USING GIST(gis_coordinates);
+    END IF;
+END $$;
 
 -- Separate table for image URIs
-CREATE TABLE public.accident_report_images (
+CREATE TABLE IF NOT EXISTS public.accident_report_images (
     image_id SERIAL PRIMARY KEY,
     report_id INT NOT NULL,
     image_uri TEXT NOT NULL,
