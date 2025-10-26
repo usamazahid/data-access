@@ -84,6 +84,119 @@ show_configuration() {
 }
 
 ###############################################################################
+# Java 17 Installation
+###############################################################################
+
+install_java() {
+    print_header "Java 17 Installation"
+    
+    if command -v java &> /dev/null; then
+        JAVA_VERSION=$(java -version 2>&1 | head -n 1)
+        print_info "Java is already installed: $JAVA_VERSION"
+        
+        # Check if it's Java 17
+        if java -version 2>&1 | grep -q "17\."; then
+            print_success "Java 17 is already installed"
+            return 0
+        else
+            print_info "Different Java version detected, installing Java 17..."
+        fi
+    else
+        print_info "Java not found, installing Java 17..."
+    fi
+    
+    # Detect OS
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS=$ID
+    else
+        print_error "Cannot detect OS"
+        exit 1
+    fi
+    
+    case $OS in
+        ubuntu|debian)
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk openjdk-17-jre
+            ;;
+            
+        centos|rhel|fedora)
+            sudo yum install -y java-17-openjdk java-17-openjdk-devel
+            ;;
+            
+        *)
+            print_error "Unsupported OS: $OS"
+            exit 1
+            ;;
+    esac
+    
+    # Verify installation
+    if command -v java &> /dev/null; then
+        JAVA_VERSION=$(java -version 2>&1 | head -n 1)
+        print_success "Java installed successfully: $JAVA_VERSION"
+        
+        # Set JAVA_HOME
+        export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+        echo "export JAVA_HOME=$JAVA_HOME" >> ~/.bashrc
+        print_info "JAVA_HOME set to: $JAVA_HOME"
+    else
+        print_error "Java installation failed"
+        exit 1
+    fi
+}
+
+###############################################################################
+# Maven Installation
+###############################################################################
+
+install_maven() {
+    print_header "Maven Installation"
+    
+    if command -v mvn &> /dev/null; then
+        MVN_VERSION=$(mvn -version | head -n 1)
+        print_info "Maven is already installed: $MVN_VERSION"
+        print_success "Maven is ready"
+        return 0
+    fi
+    
+    print_info "Maven not found, installing..."
+    
+    # Detect OS
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS=$ID
+    else
+        print_error "Cannot detect OS"
+        exit 1
+    fi
+    
+    case $OS in
+        ubuntu|debian)
+            sudo apt-get update
+            sudo apt-get install -y maven
+            ;;
+            
+        centos|rhel|fedora)
+            sudo yum install -y maven
+            ;;
+            
+        *)
+            print_error "Unsupported OS: $OS"
+            exit 1
+            ;;
+    esac
+    
+    # Verify installation
+    if command -v mvn &> /dev/null; then
+        MVN_VERSION=$(mvn -version | head -n 1)
+        print_success "Maven installed successfully: $MVN_VERSION"
+    else
+        print_error "Maven installation failed"
+        exit 1
+    fi
+}
+
+###############################################################################
 # Docker Installation
 ###############################################################################
 
@@ -326,10 +439,23 @@ verify_setup() {
 ###############################################################################
 
 main() {
-    print_header "Docker & PostgreSQL Installation Script"
+    print_header "IRS Server Setup - Complete Installation"
+    
+    print_info "This script will install:"
+    print_info "  - Java 17 (OpenJDK)"
+    print_info "  - Maven"
+    print_info "  - Docker"
+    print_info "  - PostgreSQL with PostGIS"
+    echo ""
     
     # Show configuration and ask for confirmation
     show_configuration
+    
+    # Install Java 17
+    install_java
+    
+    # Install Maven
+    install_maven
     
     # Install Docker
     install_docker
@@ -341,8 +467,29 @@ main() {
     verify_setup
     
     print_header "Installation Complete!"
-    print_success "Docker and PostgreSQL with PostGIS are ready"
-    print_info "Next step: Run './setup-database.sh' to create schema and import data"
+    print_success "All components installed successfully:"
+    echo ""
+    
+    # Show installed versions
+    if command -v java &> /dev/null; then
+        JAVA_VER=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2)
+        echo "  ✓ Java:       $JAVA_VER"
+    fi
+    
+    if command -v mvn &> /dev/null; then
+        MVN_VER=$(mvn -version | head -n 1 | awk '{print $3}')
+        echo "  ✓ Maven:      $MVN_VER"
+    fi
+    
+    if command -v docker &> /dev/null; then
+        DOCKER_VER=$(docker --version | awk '{print $3}' | tr -d ',')
+        echo "  ✓ Docker:     $DOCKER_VER"
+    fi
+    
+    echo "  ✓ PostgreSQL: 17 with PostGIS 3.4"
+    echo ""
+    
+    print_info "Next step: Run './setup-database_universal.sh' to create schema and import data"
     echo ""
 }
 
