@@ -27,11 +27,11 @@ BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Project relative paths
 PROJECT_SQL_DIR="src/main/resources/script_queries"
-PROJECT_CSV_FILE="src/main/resources/files/karachi_accident_reports.csv"
+PROJECT_CSV_DIR="src/main/resources/files"
 
 # Full paths (BASE_DIR + project paths)
 SQL_DIR="${BASE_DIR}/${PROJECT_SQL_DIR}"
-CSV_FILE="${BASE_DIR}/${PROJECT_CSV_FILE}"
+CSV_DIR="${BASE_DIR}/${PROJECT_CSV_DIR}"
 
 # Database Configuration (must match setup-docker-postgres.sh)
 DB_IP=${DB_IP:-0.0.0.0}
@@ -117,15 +117,25 @@ verify_paths() {
     fi
     echo ""
     
-    print_config "CSV Data File:"
-    echo "  Full Path:     $CSV_FILE"
-    echo "  Project Path:  $PROJECT_CSV_FILE"
-    if [ -f "$CSV_FILE" ]; then
-        print_success "File exists"
-        CSV_SIZE=$(du -h "$CSV_FILE" | cut -f1)
-        echo "  Size: $CSV_SIZE"
+    print_config "CSV Data Directory:"
+    echo "  Full Path:     $CSV_DIR"
+    echo "  Project Path:  $PROJECT_CSV_DIR"
+    if [ -d "$CSV_DIR" ]; then
+        print_success "Directory exists"
+        
+        # Count CSV files
+        CSV_COUNT=$(find "$CSV_DIR" -maxdepth 1 -name "*.csv" -type f | wc -l)
+        if [ $CSV_COUNT -gt 0 ]; then
+            echo "  Found $CSV_COUNT CSV file(s):"
+            find "$CSV_DIR" -maxdepth 1 -name "*.csv" -type f -exec basename {} \; | while read csv_name; do
+                CSV_SIZE=$(du -h "$CSV_DIR/$csv_name" | cut -f1)
+                echo "    • $csv_name ($CSV_SIZE)"
+            done
+        else
+            print_info "No CSV files found (CSV import will be skipped)"
+        fi
     else
-        print_info "File NOT found (CSV import will be skipped)"
+        print_info "Directory NOT found (CSV import will be skipped)"
     fi
     echo ""
     
@@ -234,14 +244,29 @@ setup_database_schema() {
 import_csv_data() {
     print_header "CSV Data Import"
     
-    if [ ! -f "$CSV_FILE" ]; then
-        print_info "CSV file not found, skipping data import"
-        print_info "Expected location: $CSV_FILE"
+    # Check if CSV directory exists
+    if [ ! -d "$CSV_DIR" ]; then
+        print_info "CSV directory not found, skipping data import"
+        print_info "Expected location: $CSV_DIR"
         return 0
     fi
     
-    CSV_SIZE=$(du -h "$CSV_FILE" | cut -f1)
-    print_info "CSV file found: $CSV_SIZE"
+    # Find all CSV files
+    CSV_FILES=($(find "$CSV_DIR" -maxdepth 1 -name "*.csv" -type f))
+    
+    if [ ${#CSV_FILES[@]} -eq 0 ]; then
+        print_info "No CSV files found in $CSV_DIR"
+        print_info "Skipping CSV import"
+        return 0
+    fi
+    
+    print_info "Found ${#CSV_FILES[@]} CSV file(s) in the directory:"
+    for csv_file in "${CSV_FILES[@]}"; do
+        CSV_NAME=$(basename "$csv_file")
+        CSV_SIZE=$(du -h "$csv_file" | cut -f1)
+        echo "  • $CSV_NAME ($CSV_SIZE)"
+    done
+    echo ""
     
     read -p "Do you want to import CSV data into accident_reports table? (y/N): " -n 1 -r
     echo
@@ -250,39 +275,79 @@ import_csv_data() {
         return 0
     fi
     
-    print_info "Importing CSV data..."
+    echo ""
     
-    # Copy CSV to container
-    docker cp "$CSV_FILE" ${CONTAINER_NAME}:/tmp/karachi_accident_reports.csv
+    # Get initial record count
+    INITIAL_COUNT=$(docker exec $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -tAc "SELECT COUNT(*) FROM public.accident_reports;" 2>/dev/null || echo "0")
+    print_info "Initial records in accident_reports: $INITIAL_COUNT"
+    echo ""
     
-    # Set permissions
-    docker exec $CONTAINER_NAME chmod 644 /tmp/karachi_accident_reports.csv
+    # Import each CSV file
+    local total_imported=0
+    local files_imported=0
+    local files_failed=0
     
-    # Import CSV
-    print_info "Executing COPY command..."
-    if docker exec $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -c "
-    COPY public.accident_reports (
-        latitude, longitude, accident_location, gis_coordinates,
-        user_id, num_affecties, age, created_at, status,
-        image_uri, audio_uri, video_uri, description,
-        officer_name, officer_designation, officer_contact_no, officer_notes,
-        weather_condition, visibility, road_surface_condition, road_type,
-        road_markings, preliminary_fault, gender, cause, vehicle_involved_id,
-        patient_victim_id, accident_type_id, severity
-    )
-    FROM '/tmp/karachi_accident_reports.csv'
-    DELIMITER ',' CSV HEADER;
-    "; then
-        # Count imported records
-        RECORD_COUNT=$(docker exec $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -tAc "SELECT COUNT(*) FROM public.accident_reports;")
-        print_success "CSV data imported successfully"
-        print_info "Total records in accident_reports: $RECORD_COUNT"
-    else
-        print_error "Failed to import CSV data"
-    fi
+    for csv_file in "${CSV_FILES[@]}"; do
+        CSV_NAME=$(basename "$csv_file")
+        CSV_SIZE=$(du -h "$csv_file" | cut -f1)
+        
+        print_info "Processing: $CSV_NAME ($CSV_SIZE)..."
+        
+        # Copy CSV to container
+        CONTAINER_CSV_PATH="/tmp/${CSV_NAME}"
+        if docker cp "$csv_file" ${CONTAINER_NAME}:${CONTAINER_CSV_PATH}; then
+            
+            # Set permissions
+            docker exec $CONTAINER_NAME chmod 644 ${CONTAINER_CSV_PATH}
+            
+            # Get record count before import for this file
+            BEFORE_COUNT=$(docker exec $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -tAc "SELECT COUNT(*) FROM public.accident_reports;")
+            
+            # Import CSV
+            if docker exec $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -c "
+            COPY public.accident_reports (
+                latitude, longitude, accident_location, gis_coordinates,
+                user_id, num_affecties, age, created_at, status,
+                image_uri, audio_uri, video_uri, description,
+                officer_name, officer_designation, officer_contact_no, officer_notes,
+                weather_condition, visibility, road_surface_condition, road_type,
+                road_markings, preliminary_fault, gender, cause, vehicle_involved_id,
+                patient_victim_id, accident_type_id, severity
+            )
+            FROM '${CONTAINER_CSV_PATH}'
+            DELIMITER ',' CSV HEADER;
+            " &> /dev/null; then
+                # Get record count after import
+                AFTER_COUNT=$(docker exec $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -tAc "SELECT COUNT(*) FROM public.accident_reports;")
+                IMPORTED=$((AFTER_COUNT - BEFORE_COUNT))
+                total_imported=$((total_imported + IMPORTED))
+                files_imported=$((files_imported + 1))
+                print_success "Imported $IMPORTED records from $CSV_NAME"
+            else
+                print_error "Failed to import $CSV_NAME (check CSV format and column mapping)"
+                files_failed=$((files_failed + 1))
+            fi
+            
+            # Clean up
+            docker exec $CONTAINER_NAME rm ${CONTAINER_CSV_PATH} &> /dev/null
+        else
+            print_error "Failed to copy $CSV_NAME to container"
+            files_failed=$((files_failed + 1))
+        fi
+        
+        echo ""
+    done
     
-    # Clean up
-    docker exec $CONTAINER_NAME rm /tmp/karachi_accident_reports.csv
+    # Final summary
+    print_header "CSV Import Summary"
+    echo "  Total CSV files found:    ${#CSV_FILES[@]}"
+    echo "  Successfully imported:    $files_imported"
+    echo "  Failed:                   $files_failed"
+    echo "  Total records imported:   $total_imported"
+    echo ""
+    
+    FINAL_COUNT=$(docker exec $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -tAc "SELECT COUNT(*) FROM public.accident_reports;")
+    print_success "Total records in accident_reports: $FINAL_COUNT"
 }
 
 ###############################################################################
