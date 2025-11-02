@@ -5,6 +5,7 @@ public class EvidenceDTO {
     public boolean photosTaken;
     public boolean videosRecorded;
     public boolean sketchPrepared;
+    public String id;
     public boolean isPhotosTaken() {
         return photosTaken;
     }

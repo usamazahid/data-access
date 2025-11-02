@@ -572,4 +572,88 @@ public class Report {
 
     return query.toString();
 }
+
+    // ==================== NEW METHODS FOR FULL REPORT DETAILS ====================
+    
+    public String getFullReportMainQuery() {
+        return """
+            SELECT report_id, ST_Y(gis_coordinates) AS latitude, ST_X(gis_coordinates) AS longitude,
+                   accident_location AS location, vehicle_involved_id, patient_victim_id, 
+                   accident_type_id, user_id, cause, num_affecties, age, gender,
+                   image_uri, audio_uri, status, description, created_at, severity,
+                   weather_condition, visibility, road_surface_condition, road_type,
+                   road_markings, preliminary_fault, officer_name, officer_designation,
+                   officer_contact_no, officer_notes
+            FROM accident_reports 
+            WHERE report_id = ?
+            """;
+    }
+    
+    public String getReportImagesQuery() {
+        return """
+            SELECT image_id AS id, image_uri, uploaded_at AS created_at 
+            FROM accident_report_images 
+            WHERE report_id = ? 
+            ORDER BY image_id
+            """;
+    }
+    
+    public String getReportVehiclesQuery() {
+        return """
+            SELECT id, registration_no, type AS vehicle_type_id, condition, 
+                   fitness_certificate_status, road_tax_status, insurance_status
+            FROM vehicle_details 
+            WHERE report_id = ?
+            """;
+    }
+    
+    public String getReportDriversQuery() {
+        return """
+            SELECT id, name AS full_name, cnic_no, license_no, contact_no AS phone
+            FROM driver_details 
+            WHERE report_id = ?
+            """;
+    }
+    
+    public String getReportPassengersQuery() {
+        return """
+            SELECT id, name AS full_name, type AS casualty_type, 
+                   hospital_name, injury_severity AS severity
+            FROM passenger_casualties 
+            WHERE report_id = ?
+            """;
+    }
+    
+    public String getReportWitnessesQuery() {
+        return """
+            SELECT id, name AS full_name, contact_no AS contact, address
+            FROM witness_details 
+            WHERE report_id = ?
+            """;
+    }
+    
+    public String getReportVehicleFitnessQuery() {
+        return """
+            SELECT fitness_id, report_id, vehicle_no, fitness_certificate_valid, expiry_date, road_tax_status, insurance_status
+            FROM accident_vehicle_fitness 
+            WHERE report_id = ?
+            """;
+    }
+    
+    public String getReportFollowUpQuery() {
+        return """
+            SELECT id, report_id, fir_registered, fir_number, challan_issued, challan_number, case_referred_to
+            FROM follow_up_actions 
+            WHERE report_id = ? 
+            LIMIT 1
+            """;
+    }
+    
+    public String getReportEvidenceQuery() {
+        return """
+            SELECT id, report_id, photos, videos, sketch
+            FROM evidence_collection 
+            WHERE report_id = ?
+            """;
+    }
 }

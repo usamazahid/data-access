@@ -3,6 +3,7 @@ package org.irs.dto;
 
 
     public class WitnessDTO {
+    public String witnessId;
     public String name;
     public String contactNo;
     public String address;

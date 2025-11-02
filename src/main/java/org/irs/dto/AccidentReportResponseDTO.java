@@ -1,5 +1,7 @@
 package org.irs.dto;
 
+import java.util.List;
+import java.util.Map;
 
 public class AccidentReportResponseDTO {
    public String id;
@@ -31,6 +33,16 @@ public class AccidentReportResponseDTO {
    public String imageData;
    public String audioData;
    public Integer severity;
+   
+   // Related entities for full report details
+    public List<VehicleDTO> vehicles;
+    public List<DriverDTO> drivers;
+    public List<PassengerDTO> casualties;
+    public List<WitnessDTO> witnesses;
+    public FollowUpDTO followUp;
+    public EvidenceDTO evidence;
+    public List<ImageDTO> imageDTOs;
+    public List<VehicleFitnessDTO> vehicleFitnessDetails;
     @Override
     public String toString() {
         return "AccidentReportResponseDTO [id=" + id + ", error=" + error + ", rowsInserted=" + rowsInserted

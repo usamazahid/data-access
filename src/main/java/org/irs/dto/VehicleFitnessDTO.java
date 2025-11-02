@@ -6,6 +6,8 @@ public class VehicleFitnessDTO {
     public String expiryDate;
     public Integer roadTaxStatus;
     public Integer insuranceStatus;
+    public String fitness_id;
+    
 
     // Getters and Setters
     public String getVehicleNo() { return vehicleNo; }

@@ -23,6 +23,8 @@ import org.irs.dto.AccidentReportRequestDTO;
 import org.irs.dto.AccidentReportResponseDTO;
 import org.irs.dto.AccidentStatisticsDTO;
 import org.irs.dto.DriverDTO;
+import org.irs.dto.EvidenceDTO;
+import org.irs.dto.FollowUpDTO;
 import org.irs.dto.ImageDTO;
 import org.irs.dto.PassengerDTO;
 import org.irs.dto.RequestDto;
@@ -304,50 +306,200 @@ public class AccidentReportService {
     }
 
     public AccidentReportResponseDTO getJoinedAccidentReportById(String reportId) {
-        String query = queryStore.getJoinedAccidentReportsById(reportId);
-        AccidentReportResponseDTO responseDTO = new AccidentReportResponseDTO();
-    
-        try (Connection con = datasource.getConnection(); 
-             Statement stmt = con.createStatement(); 
-             ResultSet rs = stmt.executeQuery(query)) {
-    
-            if (rs.next()) {
-                responseDTO.id = String.valueOf(rs.getLong("report_id"));
-                responseDTO.latitude = rs.getDouble("latitude");
-                responseDTO.longitude = rs.getDouble("longitude");
-                responseDTO.location = rs.getString("location");
-                responseDTO.vehicleInvolvedId = rs.getInt("vehicle_involved_id");
-                responseDTO.vehicleLabel = rs.getString("vehicle_label");
-                responseDTO.vehicleDescription = rs.getString("vehicle_description");
-                responseDTO.patientVictimId = rs.getInt("patient_victim_id");
-                responseDTO.victimLabel = rs.getString("victim_label");
-                responseDTO.victimDescription = rs.getString("victim_description");
-                responseDTO.accidentTypeId = rs.getInt("accident_type_id");
-                responseDTO.accidentTypeLabel = rs.getString("accident_type_label");
-                responseDTO.accidentTypeDescription = rs.getString("accident_type_description");
-                responseDTO.userId = rs.getInt("user_id");
-                responseDTO.reportedBy = rs.getString("reported_by");
-                responseDTO.cause = rs.getString("cause");
-                responseDTO.numAffecties = rs.getInt("num_affecties");
-                responseDTO.age = rs.getInt("age");
-                responseDTO.gender = rs.getString("gender");
-                responseDTO.imageUri = rs.getString("image_uri");
-                responseDTO.audioUri = rs.getString("audio_uri");
-                responseDTO.status = rs.getString("status");
-                responseDTO.description = rs.getString("description");
-                responseDTO.createdAt = rs.getString("created_at");
-           
-            } else {
-                responseDTO.error = "No report found with the provided ID.";
-                responseDTO.rowsInserted = "0";
+        AccidentReportResponseDTO response = new AccidentReportResponseDTO();
+        
+        try (Connection con = datasource.getConnection()) {
+            Long reportIdLong = Long.parseLong(reportId);
+            
+            // 1. Fetch main report details
+            try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getFullReportMainQuery())) {
+                ps.setLong(1, reportIdLong);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        response.id = String.valueOf(rs.getLong("report_id"));
+                        response.latitude = rs.getDouble("latitude");
+                        response.longitude = rs.getDouble("longitude");
+                        response.location = rs.getString("location");
+                        response.vehicleInvolvedId = rs.getInt("vehicle_involved_id");
+                        response.patientVictimId = rs.getInt("patient_victim_id");
+                        response.accidentTypeId = rs.getInt("accident_type_id");
+                        response.userId = rs.getInt("user_id");
+                        response.cause = rs.getString("cause");
+                        response.numAffecties = rs.getInt("num_affecties");
+                        response.age = rs.getInt("age");
+                        response.gender = rs.getString("gender");
+                        response.imageUri = rs.getString("image_uri");
+                        response.audioUri = rs.getString("audio_uri");
+                        response.status = rs.getString("status");
+                        response.description = rs.getString("description");
+                        response.createdAt = rs.getString("created_at");
+                        response.severity = rs.getInt("severity");
+                    } else {
+                        response.error = "No report found with provided ID";
+                        return response;
+                    }
+                }
             }
+            
+            // 2. Fetch report images
+            List<ImageDTO> images = new ArrayList<>();
+            try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getReportImagesQuery())) {
+                ps.setLong(1, reportIdLong);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        ImageDTO img = new ImageDTO(rs.getString("image_uri"));
+                        images.add(img);
+                    }
+                }
+            }
+            response.imageDTOs = images;
+            
+            // 3. Fetch vehicles
+            List<VehicleDTO> vehicles = new ArrayList<>();
+            try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getReportVehiclesQuery())) {
+                ps.setLong(1, reportIdLong);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        VehicleDTO v = new VehicleDTO();
+                        v.registrationNo = rs.getString("registration_no");
+                        v.type = rs.getInt("vehicle_type_id");
+                        v.condition = rs.getString("condition");
+                        v.fitnessCertificateStatus = rs.getString("fitness_certificate_status");
+                        v.roadTaxStatus = rs.getInt("road_tax_status");
+                        v.insuranceStatus = rs.getInt("insurance_status");
+                        vehicles.add(v);
+                    }
+                }
+            }
+            response.vehicles = vehicles;
+            
+            // 4. Fetch drivers
+            List<DriverDTO> drivers = new ArrayList<>();
+            try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getReportDriversQuery())) {
+                ps.setLong(1, reportIdLong);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        DriverDTO d = new DriverDTO();
+                        d.name = rs.getString("full_name");
+                        d.cnicNo = rs.getString("cnic_no");
+                        d.licenseNo = rs.getString("license_no");
+                        d.contactNo = rs.getString("phone");
+                        drivers.add(d);
+                    }
+                }
+            }
+            response.drivers = drivers;
+            
+            // 5. Fetch passengers/casualties
+            // 5. Fetch passengers/casualties
+            List<PassengerDTO> passengers = new ArrayList<>();
+            try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getReportPassengersQuery())) {
+                ps.setLong(1, reportIdLong);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        PassengerDTO p = new PassengerDTO();
+                        p.type = rs.getInt("casualty_type");
+                        p.name = rs.getString("full_name");
+                        p.hospitalName = rs.getString("hospital_name");
+                        p.injurySeverity = rs.getInt("severity");
+                        passengers.add(p);
+                    }
+                }
+            }
+            response.casualties = passengers;
+            // 6. Fetch witnesses
+            List<WitnessDTO> witnesses = new ArrayList<>();
+            try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getReportWitnessesQuery())) {
+                ps.setLong(1, reportIdLong);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        WitnessDTO w = new WitnessDTO();
+                        w.witnessId = rs.getString("id");
+                        w.name = rs.getString("full_name");
+                        w.contactNo = rs.getString("contact");
+                        w.address = rs.getString("address"); // Using statement as address
+                        witnesses.add(w);
+                    }
+                }
+            }
+            response.witnesses = witnesses;
+            
+            // 7. Fetch vehicle fitness details
+            // 7. Fetch vehicle fitness details
+            List<VehicleFitnessDTO> fitness = new ArrayList<>();
+            try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getReportVehicleFitnessQuery())) {
+                ps.setLong(1, reportIdLong);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        VehicleFitnessDTO f = new VehicleFitnessDTO();
+                        f.vehicleNo = rs.getString("vehicle_no");
+                        f.fitnessCertificateValid = rs.getBoolean("fitness_certificate_valid");
+                        f.roadTaxStatus = rs.getInt("road_tax_status");
+                        f.insuranceStatus = rs.getInt("insurance_status");
+                        f.fitness_id = rs.getString("fitness_id");
+                        f.expiryDate = rs.getString("expiry_date");
+                        fitness.add(f);
+                    }
+                }
+            }
+            response.vehicleFitnessDetails = fitness;
+            // 8. Fetch follow-up (latest one)
+            try (java.sql.PreparedStatement ps8 = con.prepareStatement(queryStore.getReportFollowUpQuery())) {
+                ps8.setLong(1, reportIdLong);
+                try (ResultSet rs = ps8.executeQuery()) {
+                    if (rs.next()) {
+                        FollowUpDTO followUp = new FollowUpDTO();
+                        // Map available data to FollowUpDTO fields
+                        followUp.firRegistered = rs.getBoolean("fir_registered");
+                        followUp.challanIssued = rs.getBoolean("challan_issued");
+                        followUp.challanNumber = rs.getString("challan_number");
+                        followUp.caseReferredTo = rs.getInt("case_referred_to");
+                        followUp.firNumber = rs.getString("fir_number");
+                        response.followUp = followUp;
+                    }
+                }
+            }
+            
+            // 9. Fetch evidence
+            // List<Map<String, Object>> evidence = new ArrayList<>();
+            try (java.sql.PreparedStatement ps9 = con.prepareStatement(queryStore.getReportEvidenceQuery())) {
+                ps9.setLong(1, reportIdLong);
+                try (ResultSet rs = ps9.executeQuery()) {
+                    while (rs.next()) {
+                        EvidenceDTO e = new EvidenceDTO();
+                        e.id = rs.getString("id");
+                        e.photosTaken = rs.getBoolean("photos");
+                        e.videosRecorded = rs.getBoolean("videos");
+                        e.sketchPrepared = rs.getBoolean("sketch");
+                        response.evidence = e;
+                    }
+                }
+            }
+            
+            
+            // 10. Optionally load image/audio as base64
+            if (response.imageUri != null && !response.imageUri.isEmpty()) {
+                try {
+                    response.imageData = generalMethods.readFileAsBase64(response.imageUri);
+                } catch (Exception e) {
+                    Log.info("Could not load image: " + e.getMessage());
+                }
+            }
+            if (response.audioUri != null && !response.audioUri.isEmpty()) {
+                try {
+                    response.audioData = generalMethods.readFileAsBase64(response.audioUri);
+                } catch (Exception e) {
+                    Log.info("Could not load audio: " + e.getMessage());
+                }
+            }
+            
         } catch (Exception ex) {
             ex.printStackTrace();
-            responseDTO.error = "Error fetching accident report: " + ex.getMessage();
-            responseDTO.rowsInserted = "0";
+            response.error = "Error fetching full report: " + ex.getMessage();
         }
-        System.out.println(responseDTO);
-        return responseDTO;
+        
+        System.out.println(response);
+        return response;
     }
     public Map<String, Object> getJoinedAccidentReportsByUserId(String userId, Integer pageNumber, Integer recordsPerPage) {
         String query=null;
