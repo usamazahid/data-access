@@ -305,9 +305,8 @@ public class AccidentReportService {
         return reports;
     }
 
-    public AccidentReportResponseDTO getJoinedAccidentReportById(String reportId) {
+    public AccidentReportResponseDTO getJoinedAccidentReportById(String reportId,boolean sendFile) {
         AccidentReportResponseDTO response = new AccidentReportResponseDTO();
-        
         try (Connection con = datasource.getConnection()) {
             Long reportIdLong = Long.parseLong(reportId);
             
@@ -334,6 +333,11 @@ public class AccidentReportService {
                         response.description = rs.getString("description");
                         response.createdAt = rs.getString("created_at");
                         response.severity = rs.getInt("severity");
+                        if(sendFile){
+                            if (response.audioUri != null && !response.audioUri.isEmpty()) {
+                                response.audioData = generalMethods.readFileAsBase64(response.audioUri);
+                            }
+                         }
                     } else {
                         response.error = "No report found with provided ID";
                         return response;
@@ -343,12 +347,17 @@ public class AccidentReportService {
             
             // 2. Fetch report images
             List<ImageDTO> images = new ArrayList<>();
-            try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getReportImagesQuery())) {
-                ps.setLong(1, reportIdLong);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        ImageDTO img = new ImageDTO(rs.getString("image_uri"));
-                        images.add(img);
+           if(sendFile){
+                try (java.sql.PreparedStatement ps = con.prepareStatement(queryStore.getReportImagesQuery())) {
+                    ps.setLong(1, reportIdLong);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            ImageDTO img = new ImageDTO(rs.getString("image_uri"));
+                            if (img.uri != null && !img.uri.isEmpty()) {
+                                img.imageData = generalMethods.readFileAsBase64(img.uri);
+                            }
+                            images.add(img);
+                        }
                     }
                 }
             }

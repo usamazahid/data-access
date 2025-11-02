@@ -145,8 +145,12 @@ public class MainResource {
     @GET
     @Path("getJoinedReportById/{reportId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public AccidentReportResponseDTO getJoinedAccidentReport(@PathParam("reportId") String reportId) {
-        return accidentReportService.getJoinedAccidentReportById(reportId);
+    public AccidentReportResponseDTO getJoinedAccidentReport(@PathParam("reportId") String reportId,@QueryParam("isFile") Boolean isFile) {
+        boolean sendFile=true;
+        if(isFile!=null){
+            sendFile=isFile;
+        }
+        return accidentReportService.getJoinedAccidentReportById(reportId,sendFile);
     }
 
     @GET
