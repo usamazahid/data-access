@@ -10,13 +10,13 @@ public class AccidentReportResponseDTO {
    public Double latitude;
    public Double longitude;
    public String location;
-   public Integer vehicleInvolvedId;
-   public Integer patientVictimId;
-   public Integer accidentTypeId;
-   public Integer userId;
+   public String vehicleInvolvedId;
+   public String patientVictimId;
+   public String accidentTypeId;
+   public String userId;
    public String cause;
-   public Integer numAffecties;
-   public Integer age;
+   public String numAffecties;
+   public String age;
    public String gender;
    public String imageUri;
    public String audioUri;
@@ -32,7 +32,7 @@ public class AccidentReportResponseDTO {
    public String reportedBy; 
    public String imageData;
    public String audioData;
-   public Integer severity;
+   public String severity;
    
    // Related entities for full report details
     public List<VehicleDTO> vehicles;
@@ -43,6 +43,20 @@ public class AccidentReportResponseDTO {
     public EvidenceDTO evidence;
     public List<ImageDTO> imageDTOs;
     public List<VehicleFitnessDTO> vehicleFitnessDetails;
+
+
+    public String weatherCondition;
+    public String visibility;
+    public String roadSurfaceCondition;
+    public String roadType;
+    public String roadMarkings; 
+    public String preliminaryFault;
+    public String nearestLandMark;
+    public String officerName;
+    public String officerDesignation;
+    public String officerContactNo;
+    public String officerNotes;
+
     @Override
     public String toString() {
         return "AccidentReportResponseDTO [id=" + id + ", error=" + error + ", rowsInserted=" + rowsInserted

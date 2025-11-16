@@ -170,13 +170,13 @@ public class AccidentReportService {
                 responseDTO.latitude = rs.getDouble("latitude");
                 responseDTO.longitude = rs.getDouble("longitude");
                 responseDTO.location = rs.getString("location");
-                responseDTO.vehicleInvolvedId = rs.getInt("vehicle_involved_id");
-                responseDTO.patientVictimId = rs.getInt("patient_victim_id");
-                responseDTO.accidentTypeId = rs.getInt("accident_type_id");
-                responseDTO.userId = rs.getInt("user_id");
+                responseDTO.vehicleInvolvedId = rs.getString("vehicle_involved_id");
+                responseDTO.patientVictimId = rs.getString("patient_victim_id");
+                responseDTO.accidentTypeId = rs.getString("accident_type_id");
+                responseDTO.userId = rs.getString("user_id");
                 responseDTO.cause = rs.getString("cause");
-                responseDTO.numAffecties = rs.getInt("num_affecties");
-                responseDTO.age = rs.getInt("age");
+                responseDTO.numAffecties = rs.getString("num_affecties");
+                responseDTO.age = rs.getString("age");
                 responseDTO.gender = rs.getString("gender");
                 responseDTO.imageUri = rs.getString("image_uri");
                 responseDTO.audioUri = rs.getString("audio_uri");
@@ -241,7 +241,7 @@ public class AccidentReportService {
                 accidentReportResponseDTO.id = String.valueOf(rs.getLong("report_id")); 
                 accidentReportResponseDTO.latitude = rs.getDouble("latitude");
                 accidentReportResponseDTO.longitude = rs.getDouble("longitude");
-                accidentReportResponseDTO.severity = rs.getInt("severity");
+                accidentReportResponseDTO.severity = rs.getString("severity");
                 accidentData.add(accidentReportResponseDTO);
            
             } 
@@ -269,13 +269,13 @@ public class AccidentReportService {
                 responseDTO.latitude = rs.getDouble("latitude");
                 responseDTO.longitude = rs.getDouble("longitude");
                 responseDTO.location = rs.getString("location");
-                responseDTO.vehicleInvolvedId = rs.getInt("vehicle_involved_id");
-                responseDTO.patientVictimId = rs.getInt("patient_victim_id");
-                responseDTO.accidentTypeId = rs.getInt("accident_type_id");
-                responseDTO.userId = rs.getInt("user_id");
+                responseDTO.vehicleInvolvedId = rs.getString("vehicle_involved_id");
+                responseDTO.patientVictimId = rs.getString("patient_victim_id");
+                responseDTO.accidentTypeId = rs.getString("accident_type_id");
+                responseDTO.userId = rs.getString("user_id");
                 responseDTO.cause = rs.getString("cause");
-                responseDTO.numAffecties = rs.getInt("num_affecties");
-                responseDTO.age = rs.getInt("age");
+                responseDTO.numAffecties = rs.getString("num_affecties");
+                responseDTO.age = rs.getString("age");
                 responseDTO.gender = rs.getString("gender");
                 responseDTO.imageUri = rs.getString("image_uri");
                 responseDTO.audioUri = rs.getString("audio_uri");
@@ -319,20 +319,33 @@ public class AccidentReportService {
                         response.latitude = rs.getDouble("latitude");
                         response.longitude = rs.getDouble("longitude");
                         response.location = rs.getString("location");
-                        response.vehicleInvolvedId = rs.getInt("vehicle_involved_id");
-                        response.patientVictimId = rs.getInt("patient_victim_id");
-                        response.accidentTypeId = rs.getInt("accident_type_id");
-                        response.userId = rs.getInt("user_id");
+                        response.nearestLandMark=response.location;
+                        response.vehicleInvolvedId = rs.getString("vehicle_involved_id");
+                        response.patientVictimId = rs.getString("patient_victim_id");
+                        response.accidentTypeId = rs.getString("accident_type_id");
+                        response.userId = rs.getString("user_id");
                         response.cause = rs.getString("cause");
-                        response.numAffecties = rs.getInt("num_affecties");
-                        response.age = rs.getInt("age");
+                        response.numAffecties = rs.getString("num_affecties");
+                        response.age = rs.getString("age");
                         response.gender = rs.getString("gender");
                         response.imageUri = rs.getString("image_uri");
                         response.audioUri = rs.getString("audio_uri");
                         response.status = rs.getString("status");
                         response.description = rs.getString("description");
                         response.createdAt = rs.getString("created_at");
-                        response.severity = rs.getInt("severity");
+                        response.severity = rs.getString("severity");
+                        response.weatherCondition=rs.getString("weather_condition");
+                        response.visibility=rs.getString("visibility");
+                        response.roadSurfaceCondition=rs.getString("road_surface_condition");
+                        response.roadType=rs.getString("road_type");
+                        response.roadMarkings=rs.getString("road_markings"); 
+                        response.preliminaryFault=rs.getString("preliminary_fault"); 
+                        response.officerName=rs.getString("officer_name");
+                        response.officerDesignation=rs.getString("officer_designation");
+                        response.officerContactNo=rs.getString("officer_contact_no");
+                        response.officerNotes=rs.getString("officer_notes");
+                        
+                        
                         if(sendFile){
                             if (response.audioUri != null && !response.audioUri.isEmpty()) {
                                 response.audioData = generalMethods.readFileAsBase64(response.audioUri);
@@ -371,7 +384,7 @@ public class AccidentReportService {
                     while (rs.next()) {
                         VehicleDTO v = new VehicleDTO();
                         v.registrationNo = rs.getString("registration_no");
-                        v.type = rs.getInt("vehicle_type_id");
+                        v.type = rs.getString("vehicle_type_id");
                         v.condition = rs.getString("condition");
                         v.fitnessCertificateStatus = rs.getString("fitness_certificate_status");
                         v.roadTaxStatus = rs.getInt("road_tax_status");
@@ -407,10 +420,10 @@ public class AccidentReportService {
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         PassengerDTO p = new PassengerDTO();
-                        p.type = rs.getInt("casualty_type");
+                        p.type = rs.getString("casualty_type");
                         p.name = rs.getString("full_name");
                         p.hospitalName = rs.getString("hospital_name");
-                        p.injurySeverity = rs.getInt("severity");
+                        p.injurySeverity = rs.getString("severity");
                         passengers.add(p);
                     }
                 }
@@ -443,8 +456,8 @@ public class AccidentReportService {
                         VehicleFitnessDTO f = new VehicleFitnessDTO();
                         f.vehicleNo = rs.getString("vehicle_no");
                         f.fitnessCertificateValid = rs.getBoolean("fitness_certificate_valid");
-                        f.roadTaxStatus = rs.getInt("road_tax_status");
-                        f.insuranceStatus = rs.getInt("insurance_status");
+                        f.roadTaxStatus = rs.getString("road_tax_status");
+                        f.insuranceStatus = rs.getString("insurance_status");
                         f.fitness_id = rs.getString("fitness_id");
                         f.expiryDate = rs.getString("expiry_date");
                         fitness.add(f);
@@ -462,7 +475,7 @@ public class AccidentReportService {
                         followUp.firRegistered = rs.getBoolean("fir_registered");
                         followUp.challanIssued = rs.getBoolean("challan_issued");
                         followUp.challanNumber = rs.getString("challan_number");
-                        followUp.caseReferredTo = rs.getInt("case_referred_to");
+                        followUp.caseReferredTo = rs.getString("case_referred_to");
                         followUp.firNumber = rs.getString("fir_number");
                         response.followUp = followUp;
                     }
@@ -539,20 +552,20 @@ public class AccidentReportService {
                 responseDTO.latitude = rs.getDouble("latitude");
                 responseDTO.longitude = rs.getDouble("longitude");
                 responseDTO.location = rs.getString("location");
-                responseDTO.vehicleInvolvedId = rs.getInt("vehicle_involved_id");
+                responseDTO.vehicleInvolvedId = rs.getString("vehicle_involved_id");
                 responseDTO.vehicleLabel = rs.getString("vehicle_label");
                 responseDTO.vehicleDescription = rs.getString("vehicle_description");
-                responseDTO.patientVictimId = rs.getInt("patient_victim_id");
+                responseDTO.patientVictimId = rs.getString("patient_victim_id");
                 responseDTO.victimLabel = rs.getString("victim_label");
                 responseDTO.victimDescription = rs.getString("victim_description");
-                responseDTO.accidentTypeId = rs.getInt("accident_type_id");
+                responseDTO.accidentTypeId = rs.getString("accident_type_id");
                 responseDTO.accidentTypeLabel = rs.getString("accident_type_label");
                 responseDTO.accidentTypeDescription = rs.getString("accident_type_description");
-                responseDTO.userId = rs.getInt("user_id");
+                responseDTO.userId = rs.getString("user_id");
                 responseDTO.reportedBy = rs.getString("reported_by");
                 responseDTO.cause = rs.getString("cause");
-                responseDTO.numAffecties = rs.getInt("num_affecties");
-                responseDTO.age = rs.getInt("age");
+                responseDTO.numAffecties = rs.getString("num_affecties");
+                responseDTO.age = rs.getString("age");
                 responseDTO.gender = rs.getString("gender");
                 responseDTO.imageUri = rs.getString("image_uri");
                 responseDTO.audioUri = rs.getString("audio_uri");
@@ -716,7 +729,7 @@ public class AccidentReportService {
                     AccidentReportResponseDTO acc = accidents.get(index);
                     sumLat += acc.latitude;
                     sumLon += acc.longitude;
-                    totalSeverity += acc.severity;
+                    totalSeverity += (acc.severity != null && !acc.severity.isEmpty()) ? Double.parseDouble(acc.severity) : 0;
 
                     clusterPoints.add(Map.of(
                         "id", acc.id,

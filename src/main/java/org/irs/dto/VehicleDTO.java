@@ -3,7 +3,7 @@ package org.irs.dto;
 
 public class VehicleDTO {
     public String registrationNo;
-    public Integer type;
+    public String type;
     public String condition;
     public String fitnessCertificateStatus;
     public Integer roadTaxStatus;
@@ -14,10 +14,10 @@ public class VehicleDTO {
     public void setRegistrationNo(String registrationNo) {
         this.registrationNo = registrationNo;
     }
-    public Integer getType() {
+    public String getType() {
         return type;
     }
-    public void setType(Integer type) {
+    public void setType(String type) {
         this.type = type;
     }
     public String getCondition() {

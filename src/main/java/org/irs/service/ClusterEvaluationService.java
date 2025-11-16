@@ -190,7 +190,7 @@ public class ClusterEvaluationService {
             
             // Calculate average severity
             double avgSeverity = clusterAccidents.stream()
-                .mapToDouble(a -> a.severity)
+                .mapToDouble(a -> (a.severity != null && !a.severity.isEmpty()) ? Double.parseDouble(a.severity) : 0)
                 .average()
                 .orElse(0);
             metrics.put("averageSeverity", avgSeverity);

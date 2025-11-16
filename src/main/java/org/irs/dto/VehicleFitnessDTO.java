@@ -4,8 +4,8 @@ public class VehicleFitnessDTO {
     public String vehicleNo;
     public boolean fitnessCertificateValid;
     public String expiryDate;
-    public Integer roadTaxStatus;
-    public Integer insuranceStatus;
+    public String roadTaxStatus;
+    public String insuranceStatus;
     public String fitness_id;
     
 
@@ -18,16 +18,16 @@ public class VehicleFitnessDTO {
 
     public String getExpiryDate() { return expiryDate; }
     public void setExpiryDate(String expiryDate) { this.expiryDate = expiryDate; }
-    public Integer getRoadTaxStatus() {
+    public String getRoadTaxStatus() {
         return roadTaxStatus;
     }
-    public void setRoadTaxStatus(Integer roadTaxStatus) {
+    public void setRoadTaxStatus(String roadTaxStatus) {
         this.roadTaxStatus = roadTaxStatus;
     }
-    public Integer getInsuranceStatus() {
+    public String getInsuranceStatus() {
         return insuranceStatus;
     }
-    public void setInsuranceStatus(Integer insuranceStatus) {
+    public void setInsuranceStatus(String insuranceStatus) {
         this.insuranceStatus = insuranceStatus;
     }
 }

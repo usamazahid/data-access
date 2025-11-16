@@ -6,7 +6,7 @@ public class FollowUpDTO {
     public String firNumber;
     public boolean challanIssued;
     public String challanNumber;
-    public Integer caseReferredTo;
+    public String caseReferredTo;
     public boolean isFirRegistered() {
         return firRegistered;
     }
@@ -31,10 +31,10 @@ public class FollowUpDTO {
     public void setChallanNumber(String challanNumber) {
         this.challanNumber = challanNumber;
     }
-    public Integer getCaseReferredTo() {
+    public String getCaseReferredTo() {
         return caseReferredTo;
     }
-    public void setCaseReferredTo(Integer caseReferredTo) {
+    public void setCaseReferredTo(String caseReferredTo) {
         this.caseReferredTo = caseReferredTo;
     }
     }
